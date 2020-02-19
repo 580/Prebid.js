@@ -36,6 +36,11 @@ const mockServerPort = 4444;
 const host = argv.host ? argv.host : 'localhost';
 const { spawn } = require('child_process');
 
+var isProduction = argv.production !== undefined;
+if (!isProduction) {
+  prebid.globalVarName = 'pbjs';
+}
+
 // these modules must be explicitly listed in --modules to be included in the build, won't be part of "all" modules
 var explicitModules = [
   'pre1api'
@@ -114,6 +119,31 @@ function watch(done) {
   });
 
   mainWatcher.on('all', gulp.series(clean, gulp.parallel(lint, 'build-bundle-dev', test)));
+  loaderWatcher.on('all', gulp.series(lint));
+  done();
+};
+
+// Watch Task with Live Reload
+function watchOnly(done) {
+  var mainWatcher = gulp.watch([
+    'src/**/*.js',
+    'modules/**/*.js',
+    '!test/spec/**/*.js',
+    '!test/spec/loaders/**/*.js'
+  ]);
+  var loaderWatcher = gulp.watch([
+    'loaders/**/*.js',
+    '!test/spec/loaders/**/*.js'
+  ]);
+
+  connect.server({
+    https: argv.https,
+    port: port,
+    root: './',
+    livereload: true
+  });
+
+  mainWatcher.on('all', gulp.series(clean, gulp.parallel(lint, 'build-bundle-dev')));
   loaderWatcher.on('all', gulp.series(lint));
   done();
 };
@@ -238,8 +268,8 @@ function test(done) {
       ];
     }
 
-    //run mock-server
-    const mockServer = spawn('node', ['./test/mock-server/index.js', '--port='+mockServerPort]);
+    // run mock-server
+    const mockServer = spawn('node', ['./test/mock-server/index.js', '--port=' + mockServerPort]);
     mockServer.stdout.on('data', (data) => {
       console.log(`stdout: ${data}`);
     });
@@ -249,13 +279,13 @@ function test(done) {
 
     execa(wdioCmd, wdioOpts, { stdio: 'inherit' })
       .then(stdout => {
-        //kill mock server
+        // kill mock server
         mockServer.kill('SIGINT');
         done();
         process.exit(0);
       })
       .catch(err => {
-        //kill mock server
+        // kill mock server
         mockServer.kill('SIGINT');
         done(new Error(`Tests failed with error: ${err}`));
         process.exit(1);
@@ -326,10 +356,10 @@ function setupE2e(done) {
   done();
 }
 
-gulp.task('updatepath', function(){
+gulp.task('updatepath', function() {
   return gulp.src(['build/dist/*.js'])
-  .pipe(replace('ib.adnxs.com/ut/v3/prebid', host + ':' + mockServerPort + '/'))
-  .pipe(gulp.dest('build/dist'));
+    .pipe(replace('ib.adnxs.com/ut/v3/prebid', host + ':' + mockServerPort + '/'))
+    .pipe(gulp.dest('build/dist'));
 });
 
 // support tasks
@@ -354,6 +384,7 @@ gulp.task('coveralls', gulp.series('test-coverage', coveralls));
 gulp.task('build', gulp.series(clean, 'build-bundle-prod'));
 gulp.task('build-postbid', gulp.series(escapePostbidConfig, buildPostbid));
 
+gulp.task('dev', gulp.series(clean, lint, gulp.parallel('build-bundle-dev', watchOnly)));
 gulp.task('serve', gulp.series(clean, lint, gulp.parallel('build-bundle-dev', watch, test)));
 gulp.task('default', gulp.series(clean, makeWebpackPkg));
 

@@ -13,7 +13,13 @@ var neverBundle = [
 ];
 
 var plugins = [
-  new RequireEnsureWithoutJsonp()
+  new RequireEnsureWithoutJsonp(),
+  new webpack.DefinePlugin({
+    'process.env': {
+      NODE_ENV: JSON.stringify(argv.production ? 'production' : 'development'),
+    },
+    // ENV_PRECACHE_MODE: JSON.stringify(env.ENV_PRECACHE_MODE),
+  }),
 ];
 
 if (argv.analyze) {
@@ -22,12 +28,12 @@ if (argv.analyze) {
   )
 }
 
-plugins.push(  // this plugin must be last so it can be easily removed for karma unit tests
+plugins.push( // this plugin must be last so it can be easily removed for karma unit tests
   new webpack.optimize.CommonsChunkPlugin({
     name: 'prebid',
     filename: 'prebid-core.js',
     minChunks: function(module) {
-       return (
+      return (
         (
           module.context && module.context.startsWith(path.resolve('./src')) &&
           !(module.resource && neverBundle.some(name => module.resource.includes(name)))
@@ -48,8 +54,14 @@ module.exports = {
       'node_modules'
     ],
   },
+  // entry: {
+  //   prebid: './src/prebid.js',
+  //   ympb: ['./src/main.js'],
+  // },
   output: {
-    jsonpFunction: prebid.globalVarName + "Chunk"
+    // filename: '[name].js',
+    // chunkFilename: '[name].js',
+    jsonpFunction: prebid.globalVarName + 'Chunk'
   },
   module: {
     rules: [
