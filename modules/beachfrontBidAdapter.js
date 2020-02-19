@@ -58,7 +58,7 @@ export const spec = {
 
     if (isVideoBid(bidRequest)) {
       if (!response || !response.url || !response.bidPrice) {
-        utils.logWarn(`No valid video bids from ${spec.code} bidder`);
+        utils.logWarn(`No valid video bids from ${bidRequest.bidder} bidder`);
         return [];
       }
       let sizes = getVideoSizes(bidRequest);
@@ -66,7 +66,7 @@ export const spec = {
       let context = utils.deepAccess(bidRequest, 'mediaTypes.video.context');
       return {
         requestId: bidRequest.bidId,
-        bidderCode: spec.code,
+        bidderCode: bidRequest.bidder, // YMPB bidderCode: spec.code,
         vastUrl: response.url,
         vastXml: response.vast,
         cpm: response.bidPrice,
@@ -81,7 +81,7 @@ export const spec = {
       };
     } else {
       if (!response || !response.length) {
-        utils.logWarn(`No valid banner bids from ${spec.code} bidder`);
+        utils.logWarn(`No valid banner bids from ${bidRequest.bidder} bidder`);
         return [];
       }
       return response
@@ -90,7 +90,7 @@ export const spec = {
           let request = find(bidRequest, req => req.adUnitCode === bid.slot);
           return {
             requestId: request.bidId,
-            bidderCode: spec.code,
+            bidderCode: bidRequest.bidder, // YMPB bidderCode: spec.code,
             ad: bid.adm,
             creativeId: bid.crid,
             cpm: bid.price,

@@ -249,7 +249,7 @@ function RhythmOneBidAdapter() {
       let bidRequest = slotsToBids[bid.impid];
       let bidResponse = {
         requestId: bidRequest.bidId,
-        bidderCode: that.code,
+        bidderCode: bidRequest.bidder, // YMPB bidderCode: that.code,
         cpm: parseFloat(bid.price),
         width: bid.w,
         height: bid.h,
