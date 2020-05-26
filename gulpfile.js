@@ -268,11 +268,7 @@ function test(done) {
       ];
     }
 
-<<<<<<< HEAD
     // run mock-server
-=======
-    //run mock-server
->>>>>>> 3.20.0
     const mockServer = spawn('node', ['./test/mock-server/index.js', '--port=' + mockServerPort]);
     mockServer.stdout.on('data', (data) => {
       console.log(`stdout: ${data}`);
