@@ -14,12 +14,16 @@ var neverBundle = [
 
 var plugins = [
   new RequireEnsureWithoutJsonp(),
+<<<<<<< HEAD
   new webpack.DefinePlugin({
     'process.env': {
       NODE_ENV: JSON.stringify(argv.production ? 'production' : 'development'),
     },
     // ENV_PRECACHE_MODE: JSON.stringify(env.ENV_PRECACHE_MODE),
   }),
+=======
+  new webpack.EnvironmentPlugin(['LiveConnectMode'])
+>>>>>>> 5.1.0
 ];
 
 if (argv.analyze) {

@@ -38,7 +38,7 @@ function RhythmOneBidAdapter() {
       slotsToBids[BRs[i].adUnitCode] = BRs[i];
       var impObj = {};
       impObj.id = BRs[i].adUnitCode;
-      impObj.bidfloor = parseFloat(utils.deepAccess(BRs[i], 'params.floor')) || 0;
+      impObj.bidfloor = 0;
       impObj.secure = isSecure;
 
       if (utils.deepAccess(BRs[i], 'mediaTypes.banner') || utils.deepAccess(BRs[i], 'mediaType') === 'banner') {
@@ -249,10 +249,14 @@ function RhythmOneBidAdapter() {
       let bidRequest = slotsToBids[bid.impid];
       let bidResponse = {
         requestId: bidRequest.bidId,
-        bidderCode: bidRequest.bidder, // YMPB bidderCode: that.code,
+        // bidderCode: that.code,
+        bidderCode: bidRequest.bidder, // YMPB: bidderCode: that.code,
         cpm: parseFloat(bid.price),
         width: bid.w,
         height: bid.h,
+        meta: {
+          advertiserDomains: bid.adomain
+        },
         creativeId: bid.crid,
         currency: 'USD',
         netRevenue: true,
