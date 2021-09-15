@@ -119,6 +119,17 @@ export function newAuctionManager() {
     _auctions.length = 0;
   }
 
+  auctionManager.removeBidReceived = function(bid) { // YMPB
+    for (let index = 0; index < _auctions.length; index++) {
+      let auction = _auctions[index];
+      auction.removeBidReceived(bid);
+    }
+  }
+
+  auctionManager.getAuction = function(auctionId) { // YMPB
+    return find(_auctions, auction => auction.getAuctionId() === auctionId);
+  }
+
   function _addAuction(auction) {
     _auctions.push(auction);
   }
