@@ -1,11 +1,11 @@
 var prebid = require('./package.json');
 var path = require('path');
 var webpack = require('webpack');
-var helpers = require('./gulpHelpers');
+var helpers = require('./gulpHelpers.js');
 var RequireEnsureWithoutJsonp = require('./plugins/RequireEnsureWithoutJsonp.js');
 var { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
 var argv = require('yargs').argv;
-var allowedModules = require('./allowedModules');
+var allowedModules = require('./allowedModules.js');
 
 // list of module names to never include in the common bundle chunk
 var neverBundle = [
@@ -33,8 +33,10 @@ plugins.push( // this plugin must be last so it can be easily removed for karma 
           module.context && module.context.startsWith(path.resolve('./src')) &&
           !(module.resource && neverBundle.some(name => module.resource.includes(name)))
         ) ||
-        module.resource && (allowedModules.src.concat(['core-js'])).some(
-          name => module.resource.includes(path.resolve('./node_modules/' + name))
+        (
+          module.resource && (allowedModules.src.concat(['core-js'])).some(
+            name => module.resource.includes(path.resolve('./node_modules/' + name))
+          )
         )
       );
     }
@@ -49,13 +51,7 @@ module.exports = {
       'node_modules'
     ],
   },
-  // entry: {
-  //   prebid: './src/prebid.js',
-  //   ympb: ['./src/main.js'],
-  // },
   output: {
-    // filename: '[name].js',
-    // chunkFilename: '[name].js',
     jsonpFunction: prebid.globalVarName + 'Chunk'
   },
   module: {
