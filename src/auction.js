@@ -341,10 +341,18 @@ export function newAuction({adUnits, adUnitCodes, callback, cbTimeout, labels, a
     adapterManager.callSetTargetingBidder(bid.bidder, bid);
   }
 
+  function emptyAuction() { // YMPB
+    _bidderRequests.length = 0;
+    _bidsReceived.length = 0;
+    _noBids.length = 0;
+    _winningBids.length = 0;
+  }
+
   return {
     addBidReceived,
     addNoBid,
     removeBidReceived, // YMPB
+    emptyAuction, // YMPB
     executeCallback,
     callBids,
     addWinningBid,

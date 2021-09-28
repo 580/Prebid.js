@@ -130,6 +130,31 @@ export function newAuctionManager() {
     return find(_auctions, auction => auction.getAuctionId() === auctionId);
   }
 
+  auctionManager.removeAuction = function(auctionId) { // YMPB
+    for (let index = 0; index < _auctions.length; index++) {
+      let auction = _auctions[index];
+
+      if (auction.getAuctionId() === auctionId) {
+        auction.emptyAuction();
+        _auctions.splice(index, 1);
+        break;
+      }
+    }
+  }
+
+  auctionManager.clearAuctions = function() { // YMPB
+    let _now = Date.now();
+
+    for (let index = _auctions.length - 1; index >= 0; index--) {
+      let auction = _auctions[index];
+
+      if (_now - auction._auctionEnd >= 30 * 1000) {
+        auction.emptyAuction();
+        _auctions.splice(index, 1);
+      }
+    }
+  }
+
   function _addAuction(auction) {
     _auctions.push(auction);
   }
