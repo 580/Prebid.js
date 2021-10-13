@@ -120,11 +120,7 @@ export const spec = {
       return bidResponse;
     } else {
       if (!response || !response.length) {
-<<<<<<< HEAD
-        utils.logWarn(`No valid banner bids from ${bidRequest.bidder} bidder`);
-=======
         logWarn(`No valid banner bids from ${spec.code} bidder`);
->>>>>>> 5.17.0
         return [];
       }
       return response
