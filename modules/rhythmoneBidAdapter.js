@@ -250,7 +250,7 @@ function RhythmOneBidAdapter() {
       let bidResponse = {
         requestId: bidRequest.bidId,
         // bidderCode: that.code,
-        bidderCode: bidRequest.bidder, // YMPB: bidderCode: that.code,
+        bidderCode: bidRequest.bidder || that.code, // YMPB
         cpm: parseFloat(bid.price),
         width: bid.w,
         height: bid.h,
