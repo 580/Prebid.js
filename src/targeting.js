@@ -380,7 +380,7 @@ export function newTargeting(auctionManager) {
    */
   targeting.setTargetingForGPT = function(targetingConfig, customSlotMatching) {
     window.googletag.pubads().getSlots().forEach(slot => {
-      Object.keys(targetingConfig).filter(customSlotMatching ? customSlotMatching(slot) : isAdUnitCodeMatchingSlot(slot))
+      Object.keys(targetingConfig).filter(customSlotMatching ? customSlotMatching(slot, targetingConfig) : isAdUnitCodeMatchingSlot(slot)) // YMPB
         .forEach(targetId => {
           Object.keys(targetingConfig[targetId]).forEach(key => {
             let value = targetingConfig[targetId][key];
