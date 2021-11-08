@@ -123,6 +123,25 @@ export function newAuction({adUnits, adUnitCodes, callback, cbTimeout, labels, a
   function addBidRequests(bidderRequests) { _bidderRequests = _bidderRequests.concat(bidderRequests); }
   function addBidReceived(bidsReceived) { _bidsReceived = _bidsReceived.concat(bidsReceived); }
   function addNoBid(noBid) { _noBids = _noBids.concat(noBid); }
+  function removeBidReceived(bid) { // YMPB
+    for (let index = 0; index < _bidsReceived.length; index++) {
+      const _bid = _bidsReceived[index];
+      if (bid.adId === _bid.adId) {
+        _bidsReceived.splice(index, 1);
+      }
+    }
+  }
+
+  function setBidTargeting(bid) {
+    adapterManager.callSetTargetingBidder(bid.bidder, bid);
+  }
+
+  function emptyAuction() { // YMPB
+    _bidderRequests.length = 0;
+    _bidsReceived.length = 0;
+    _noBids.length = 0;
+    _winningBids.length = 0;
+  }
 
   function getProperties() {
     return {
@@ -336,6 +355,8 @@ export function newAuction({adUnits, adUnitCodes, callback, cbTimeout, labels, a
   return {
     addBidReceived,
     addNoBid,
+    removeBidReceived, // YMPB
+    emptyAuction, // YMPB
     executeCallback,
     callBids,
     addWinningBid,

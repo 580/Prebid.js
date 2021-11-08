@@ -74,7 +74,8 @@ export const spec = {
       let responseMeta = Object.assign({ mediaType: VIDEO, advertiserDomains: [] }, response.meta);
       let bidResponse = {
         requestId: bidRequest.bidId,
-        bidderCode: spec.code,
+        // bidderCode: spec.code,
+        idderCode: bidRequest.bidder || spec.code, // YMPB
         cpm: response.bidPrice,
         width: firstSize.w,
         height: firstSize.h,
@@ -108,7 +109,8 @@ export const spec = {
           let responseMeta = Object.assign({ mediaType: BANNER, advertiserDomains: [] }, bid.meta);
           return {
             requestId: request.bidId,
-            bidderCode: spec.code,
+            // bidderCode: spec.code,
+            idderCode: bidRequest.bidder || spec.code, // YMPB
             ad: bid.adm,
             creativeId: bid.crid,
             cpm: bid.price,
