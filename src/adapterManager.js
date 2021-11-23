@@ -96,6 +96,15 @@ function getBids({bidderCode, auctionId, bidderRequestId, adUnits, labels, src})
             );
           }
 
+          // YMPB
+          if (active && bid.labelAny && bid.labelAny.length) {
+            labels.forEach(function(_label) {
+              if (bid.labelAny.indexOf(_label) < 0) {
+                active = false;
+              }
+            });
+          }
+
           if (active) {
             bids.push(Object.assign({}, bid, {
               adUnitCode: adUnit.code,
@@ -617,5 +626,12 @@ adapterManager.callSetTargetingBidder = function(bidder, bid) {
 adapterManager.callBidViewableBidder = function(bidder, bid) {
   tryCallBidderMethod(bidder, 'onBidViewable', bid);
 };
+
+// YMPB: check if the bidder adapter has been imported
+adapterManager.checkBidAdapter = function(bidderCode) {
+  let s2sConfig = config.getConfig('s2sConfig');
+  let s2sBidders = s2sConfig && s2sConfig.bidders;
+  return typeof _bidderRegistry[bidderCode] !== 'undefined' || (s2sBidders && includes(s2sBidders, alias));
+}
 
 export default adapterManager;
