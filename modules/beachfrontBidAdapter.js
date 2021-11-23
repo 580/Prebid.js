@@ -96,7 +96,7 @@ export const spec = {
       let bidResponse = {
         requestId: bidRequest.bidId,
         // bidderCode: spec.code,
-        bidderCode: bidRequest.bidder, // YMPB: Override bidderCode to support on bid alias
+        idderCode: bidRequest.bidder || spec.code, // YMPB
         cpm: response.bidPrice,
         width: firstSize.w,
         height: firstSize.h,
@@ -131,7 +131,7 @@ export const spec = {
           return {
             requestId: request.bidId,
             // bidderCode: spec.code,
-            bidderCode: bidRequest.bidder, // YMPB: Override bidderCode to support on bid alias
+            idderCode: bidRequest.bidder || spec.code, // YMPB
             ad: bid.adm,
             creativeId: bid.crid,
             cpm: bid.price,

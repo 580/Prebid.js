@@ -209,7 +209,12 @@ export function parseSizesInput(sizeObj) {
     }
   }
 
-  return parsedSizes;
+  // YMPB: filter out empty item, the size may empty if `fluid` is set.
+  return parsedSizes.filter(function(size) {
+    return size && size.length;
+  });
+
+  // return parsedSizes;
 }
 
 // Parse a GPT style single size array, (i.e [300, 250])
