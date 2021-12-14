@@ -366,6 +366,8 @@ $$PREBID_GLOBAL$$.setTargetingForGPTAsync = function (adUnit, customSlotMatching
 
   // emit event
   events.emit(SET_TARGETING, targetingSet);
+
+  return targetingSet;
 };
 
 /**
