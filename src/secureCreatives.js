@@ -66,7 +66,8 @@ export function receiveMessage(ev) {
       } else if (data.action === 'resizeNativeHeight') {
         adObject.height = data.height;
         adObject.width = data.width;
-        resizeRemoteCreative(adObject);
+        // YMPB: resize will be done by Yolla Tag
+        // resizeRemoteCreative(adObject);
       } else {
         const trackerType = fireNativeTrackers(data, adObject);
         if (trackerType === 'click') { return; }
