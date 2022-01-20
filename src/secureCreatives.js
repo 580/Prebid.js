@@ -67,7 +67,28 @@ export function receiveMessage(ev) {
         adObject.height = data.height;
         adObject.width = data.width;
         // YMPB: resize will be done by Yolla Tag
-        // resizeRemoteCreative(adObject);
+        let slotSize = [0, 0];
+
+        try {
+          if (YMPB.getMaxSizeByUnitCode) {
+            slotSize = YMPB.getMaxSizeByUnitCode(adObject.adUnitCode);
+          } else {
+            const yollaTagSlot = getYollaTagElement(adObject.adUnitCode);
+            slotSize = [yollaTagSlot.offsetWidth, yollaTagSlot.offsetHeight];
+          }
+        } catch (error) {
+          slotSize = [0, 0];
+        }
+
+        if (slotSize[0] > adObject.width) {
+          adObject.width = slotSize[0];
+        }
+
+        if (slotSize[1] > adObject.height) {
+          adObject.height = slotSize[1];
+        }
+        
+        resizeRemoteCreative(adObject);
       } else {
         const trackerType = fireNativeTrackers(data, adObject);
         if (trackerType === 'click') { return; }
@@ -139,4 +160,9 @@ function resizeRemoteCreative({ adId, adUnitCode, width, height }) {
     let astTag = window.apntag.getTag(adUnitCode);
     return astTag && astTag.targetId;
   }
+}
+
+// YMPB getYollaTagElement
+function getYollaTagElement(adUnitCode) {
+  return document.getElementById(adUnitCode);
 }
