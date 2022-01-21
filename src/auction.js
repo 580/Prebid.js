@@ -131,6 +131,7 @@ export function newAuction({adUnits, adUnitCodes, callback, cbTimeout, labels, a
       const _bid = _bidsReceived[index];
       if (bid.adId === _bid.adId) {
         _bidsReceived.splice(index, 1);
+        console.log('Removed', bid);
       }
     }
   }

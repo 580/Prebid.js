@@ -120,6 +120,8 @@ export function newAuctionManager() {
   }
 
   auctionManager.removeBidReceived = function(bid) { // YMPB
+    console.log('Removing bid from auctions', bid);
+
     for (let index = 0; index < _auctions.length; index++) {
       let auction = _auctions[index];
       auction.removeBidReceived(bid);
