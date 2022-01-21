@@ -80,6 +80,8 @@ export function receiveMessage(ev) {
           slotSize = [0, 0];
         }
 
+        // console.log('receive message', slotSize);
+
         if (slotSize[0] > adObject.width) {
           adObject.width = slotSize[0];
         }
@@ -87,7 +89,7 @@ export function receiveMessage(ev) {
         if (slotSize[1] > adObject.height) {
           adObject.height = slotSize[1];
         }
-        
+
         resizeRemoteCreative(adObject);
       } else {
         const trackerType = fireNativeTrackers(data, adObject);

@@ -344,11 +344,17 @@ export function newAuction({adUnits, adUnitCodes, callback, cbTimeout, labels, a
     adapterManager.callSetTargetingBidder(bid.bidder, bid);
   }
 
-  function emptyAuction() { // YMPB
+  // YMPB
+  function emptyAuction() {
     _bidderRequests.length = 0;
     _bidsReceived.length = 0;
     _noBids.length = 0;
     _winningBids.length = 0;
+  }
+
+  // YMPB
+  function getBidsReceivedByUnitCode(code) {
+    return _bidsReceived.filter(bid => bid.adUnitCode === code);
   }
 
   return {
@@ -356,6 +362,7 @@ export function newAuction({adUnits, adUnitCodes, callback, cbTimeout, labels, a
     addNoBid,
     removeBidReceived, // YMPB
     emptyAuction, // YMPB
+    getBidsReceivedByUnitCode, // YMPB
     executeCallback,
     callBids,
     addWinningBid,
