@@ -85,33 +85,21 @@ function getBids({bidderCode, auctionId, bidderRequestId, adUnits, src}) {
           );
         }
 
-        // YMPB
-        if (active && bid.labelAny && bid.labelAny.length) {
-          labels.forEach(function(_label) {
-            if (bid.labelAny.indexOf(_label) < 0) {
-              active = false;
-            }
-          });
-        }
-
-        if (active) {
-          bids.push(Object.assign({}, bid, {
-            adUnitCode: adUnit.code,
-            transactionId: adUnit.transactionId,
-            sizes: deepAccess(mediaTypes, 'banner.sizes') || deepAccess(mediaTypes, 'video.playerSize') || [],
-            bidId: bid.bid_id || getUniqueIdentifierStr(),
-            bidderRequestId,
-            auctionId,
-            src,
-            bidRequestsCount: adunitCounter.getRequestsCounter(adUnit.code),
-            bidderRequestsCount: adunitCounter.getBidderRequestsCounter(adUnit.code, bid.bidder),
-            bidderWinsCount: adunitCounter.getBidderWinsCounter(adUnit.code, bid.bidder),
-          }));
-        }
+        bids.push(Object.assign({}, bid, {
+          adUnitCode: adUnit.code,
+          transactionId: adUnit.transactionId,
+          sizes: deepAccess(mediaTypes, 'banner.sizes') || deepAccess(mediaTypes, 'video.playerSize') || [],
+          bidId: bid.bid_id || getUniqueIdentifierStr(),
+          bidderRequestId,
+          auctionId,
+          src,
+          bidRequestsCount: adunitCounter.getRequestsCounter(adUnit.code),
+          bidderRequestsCount: adunitCounter.getBidderRequestsCounter(adUnit.code, bid.bidder),
+          bidderWinsCount: adunitCounter.getBidderWinsCounter(adUnit.code, bid.bidder),
+        }));
         return bids;
       }, [])
     );
-
     return result;
   }, []).reduce(flatten, []).filter(val => val !== '');
 }
