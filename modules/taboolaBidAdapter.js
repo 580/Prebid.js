@@ -3,7 +3,7 @@
 import {registerBidder} from '../src/adapters/bidderFactory.js';
 import {BANNER} from '../src/mediaTypes.js';
 import {config} from '../src/config.js';
-import {getWindowSelf, getWindowTop} from '../src/utils.js'
+import {getWindowSelf} from '../src/utils.js'
 import {getStorageManager} from '../src/storageManager.js';
 
 const BIDDER_CODE = 'taboola';
@@ -60,28 +60,12 @@ export const userData = {
 
 export const internal = {
   getPageUrl: (refererInfo = {}) => {
-    if (refererInfo.canonicalUrl) {
-      return refererInfo.canonicalUrl;
-    }
-
-    if (config.getConfig('pageUrl')) {
-      return config.getConfig('pageUrl');
-    }
-
-    try {
-      return getWindowTop().location.href;
-    } catch (e) {
-      return getWindowSelf().location.href;
-    }
+    return refererInfo.page || getWindowSelf().location.href;
   },
   getReferrer: (refererInfo = {}) => {
-    if (refererInfo.referer) {
-      return refererInfo.referer;
-    }
-
-    try {
-      return getWindowTop().document.referrer;
-    } catch (e) {
+    if (refererInfo.ref) {
+      return refererInfo.ref;
+    } else {
       return getWindowSelf().document.referrer;
     }
   }
@@ -123,10 +107,10 @@ export const spec = {
     }
 
     if (config.getConfig('coppa')) {
-      regs.coppa = 1
+      regs.coppa = 1;
     }
 
-    const ortb2 = config.getConfig('ortb2') || {
+    const ortb2 = bidderRequest.ortb2 || {
       badv: [],
       bcat: []
     };
@@ -176,7 +160,7 @@ function getSiteProperties({publisherId, bcat = []}, refererInfo) {
   return {
     id: publisherId,
     name: publisherId,
-    domain: window.location.host,
+    domain: refererInfo?.domain || window.location.host,
     page: getPageUrl(refererInfo),
     ref: getReferrer(refererInfo),
     publisher: {
@@ -238,9 +222,8 @@ function getBid(requestId, currency, bidResponse) {
   if (!bidResponse) {
     return;
   }
-
   const {
-    price: cpm, crid: creativeId, adm: ad, w: width, h: height, adomain: advertiserDomains, meta = {}
+    price: cpm, crid: creativeId, adm: ad, w: width, h: height, exp: ttl, adomain: advertiserDomains, meta = {}
   } = bidResponse;
 
   if (advertiserDomains && advertiserDomains.length > 0) {
@@ -249,7 +232,7 @@ function getBid(requestId, currency, bidResponse) {
 
   return {
     requestId,
-    ttl: 360,
+    ttl,
     mediaType: BANNER,
     cpm,
     creativeId,
