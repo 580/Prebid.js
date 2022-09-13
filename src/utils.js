@@ -4,7 +4,7 @@ import {find, includes} from './polyfill.js';
 import CONSTANTS from './constants.json';
 import {GreedyPromise} from './utils/promise.js';
 export { default as deepAccess } from 'dlv/index.js';
-export { default as deepSetValue } from 'dset';
+export { dset as deepSetValue } from 'dset';
 
 var tArr = 'Array';
 var tStr = 'String';
@@ -960,14 +960,22 @@ export function isSlotMatchingAdUnitCode(adUnitCode) {
 }
 
 /**
- * @summary Uses the adUnit's code in order to find a matching gptSlot on the page
+ * @summary Uses the adUnit's code in order to find a matching gpt slot object on the page
  */
-export function getGptSlotInfoForAdUnitCode(adUnitCode) {
+export function getGptSlotForAdUnitCode(adUnitCode) {
   let matchingSlot;
   if (isGptPubadsDefined()) {
     // find the first matching gpt slot on the page
     matchingSlot = find(window.googletag.pubads().getSlots(), isSlotMatchingAdUnitCode(adUnitCode));
   }
+  return matchingSlot;
+};
+
+/**
+ * @summary Uses the adUnit's code in order to find a matching gptSlot on the page
+ */
+export function getGptSlotInfoForAdUnitCode(adUnitCode) {
+  const matchingSlot = getGptSlotForAdUnitCode(adUnitCode);
   if (matchingSlot) {
     return {
       gptSlot: matchingSlot.getAdUnitPath(),
