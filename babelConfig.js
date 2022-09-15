@@ -32,5 +32,6 @@ module.exports = function (options = {}) {
       }
       return plugins;
     })(),
+    // sourceType: 'unambiguous',
   }
 }
