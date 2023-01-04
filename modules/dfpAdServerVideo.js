@@ -70,7 +70,13 @@ export function buildDfpVideoUrl(options) {
   }
 
   const adUnit = options.adUnit;
-  const bid = options.bid || targeting.getWinningBids(adUnit.code)[0];
+  // const bid = options.bid || targeting.getWinningBids(adUnit.code)[0]; // YMPB
+
+  let bid = options.bid;
+
+  if (!bid && !options.noTargeting) {
+    bid = targeting.getWinningBids(adUnit.code)[0];
+  }
 
   let urlComponents = {};
 
@@ -276,8 +282,10 @@ function getCustParams(bid, options, urlCustParams) {
   let allTargetingData = {};
   const adUnit = options && options.adUnit;
   if (adUnit) {
-    let allTargeting = targeting.getAllTargeting(adUnit.code);
-    allTargetingData = (allTargeting) ? allTargeting[adUnit.code] : {};
+    if (!options.noTargeting) { // YMPB
+      let allTargeting = targeting.getAllTargeting(adUnit.code);
+      allTargetingData = (allTargeting) ? allTargeting[adUnit.code] : {};
+    }
   }
 
   const prebidTargetingSet = Object.assign({},
