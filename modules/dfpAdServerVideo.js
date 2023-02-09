@@ -74,7 +74,7 @@ export function buildDfpVideoUrl(options) {
 
   let bid = options.bid;
 
-  if (!bid && !options.noTargeting) {
+  if (!bid && !options.noTargeting) { // YMPB
     bid = targeting.getWinningBids(adUnit.code)[0];
   }
 

@@ -6,7 +6,7 @@ import { config } from './config.js';
 import { NATIVE_TARGETING_KEYS } from './native.js';
 import { auctionManager } from './auctionManager.js';
 import { sizeSupported } from './sizeMapping.js';
-import { ADPOD } from './mediaTypes.js';
+import { ADPOD, VIDEO } from './mediaTypes.js';
 import { hook } from './hook.js';
 import { bidderSettings } from './bidderSettings.js';
 import {includes, find} from './polyfill.js';
@@ -172,6 +172,40 @@ export function newTargeting(auctionManager) {
   };
 
   /**
+   * YMPB logic to replace original targeting key-value logic
+   *
+   * @param {*} adUnitCodes
+   * @param {*} bidsReceived
+   */
+  function getYmpbTargetings(adUnitCodes, bidsReceived) {
+    // return (config.getConfig('enableSendAllBids') ? getBidLandscapeTargeting(adUnitCodes, bidsReceived) : getDealBids(adUnitCodes, bidsReceived))
+
+    if (config.getConfig('enableSendAllBids') === false && config.getConfig('enableSendAllVideoBids') === false) {
+      return getDealBids(adUnitCodes, bidsReceived);
+    }
+
+    // YMPB
+    const highestCpmVideoBids = config.getConfig('enableSendAllVideoBids') ? [] : getHighestCpmBidsFromBidPool(bidsReceived.filter(bid => bid.mediaType === VIDEO), getHighestCpm, 1);
+    const highestCpmBids = config.getConfig('enableSendAllBids') ? [] : getHighestCpmBidsFromBidPool(bidsReceived.filter(bid => bid.mediaType !== VIDEO), getHighestCpm, 1);
+
+    const bids = bidsReceived.filter(bid => {
+      if (bid.mediaType === VIDEO) {
+        if (config.getConfig('enableSendAllVideoBids') === false) {
+          return !!find(highestCpmVideoBids, b => b.adId === bid.adId);
+        }
+      } else {
+        if (config.getConfig('enableSendAllBids') === false) {
+          return !!find(highestCpmBids, b => b.adId === bid.adId);
+        }
+      }
+
+      return true;
+    });
+
+    return getBidLandscapeTargeting(adUnitCodes, bids);
+  }
+
+  /**
    * Returns targeting for any bids which have deals if alwaysIncludeDeals === true
    */
   function getDealBids(adUnitCodes, bidsReceived) {
@@ -249,7 +283,8 @@ export function newTargeting(auctionManager) {
     // `alwaysUseBid=true`. If sending all bids is enabled, add targeting for losing bids.
     var targeting = getWinningBidTargeting(adUnitCodes, bidsReceived)
       .concat(getCustomBidTargeting(adUnitCodes, bidsReceived))
-      .concat(config.getConfig('enableSendAllBids') ? getBidLandscapeTargeting(adUnitCodes, bidsReceived) : getDealBids(adUnitCodes, bidsReceived))
+      // .concat(config.getConfig('enableSendAllBids') ? getBidLandscapeTargeting(adUnitCodes, bidsReceived) : getDealBids(adUnitCodes, bidsReceived))
+      .concat(getYmpbTargetings(adUnitCodes, bidsReceived)) // YMPB: attach bidder specific key-values
       .concat(getAdUnitTargeting(adUnitCodes));
 
     // store a reference of the targeting keys
