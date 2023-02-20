@@ -83,7 +83,8 @@
     ],
     "videoModule": [
       "jwplayerVideoProvider",
-      "videojsVideoProvider"
+      "videojsVideoProvider",
+      "yollaVideoProvider"
     ]
   }
 }

@@ -96,7 +96,7 @@ export function PbVideo(videoCore_, getConfig_, pbGlobal_, pbEvents_, videoEvent
     return videoCore.getOrtbContent(divId);
   }
 
-  return { init, renderBid, getOrtbVideo, getOrtbContent };
+  return { init, renderBid, getOrtbVideo, getOrtbContent, renderWinningBid }; // YMPB
 
   function beforeBidsRequested(nextFn, bidderRequest) {
     enrichAuction(bidderRequest);
