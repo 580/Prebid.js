@@ -469,8 +469,14 @@ function generateVideoParameters(bid, bidderRequest) {
   let width;
   let height;
 
+  // YMPB: override size
+  let videoSize = config.getConfig('mediaTypes.video.playerSize');
+
   // normalize config for video size
-  if (isArray(bid.sizes) && bid.sizes.length === 2 && !isArray(bid.sizes[0])) {
+  if (isArray(videoSize) && videoSize.length === 2) { // YMPB
+    width = parseInt(videoSize[0], 10);
+    height = parseInt(videoSize[1], 10);
+  } else if (isArray(bid.sizes) && bid.sizes.length === 2 && !isArray(bid.sizes[0])) {
     width = parseInt(bid.sizes[0], 10);
     height = parseInt(bid.sizes[1], 10);
   } else if (isArray(bid.sizes) && isArray(bid.sizes[0]) && bid.sizes[0].length === 2) {
