@@ -130,8 +130,8 @@ export function VideojsProvider(config, vjs_, adState_, timeState_, callbackStor
         API_FRAMEWORKS.VPAID_2_0 // TODO: needs a reference to the imaOptions used at setup to determine if vpaid can be used
       ],
       // TODO: Make sure this returns dimensions in DIPS
-      h: Math.floor(player.currentHeight()),
-      w: Math.floor(player.currentWidth()),
+      // h: Math.floor(player.currentHeight()),
+      // w: Math.floor(player.currentWidth()),
       // TODO: implement startdelay since its reccomend param
       // both linearity forms are supported so the param is excluded
       // sequence - TODO not yet supported
