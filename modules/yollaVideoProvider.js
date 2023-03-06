@@ -161,8 +161,8 @@ export function YollavideoProvider(config, $player, $adUnit) {
         API_FRAMEWORKS.OMID_1_0,
       ],
       // TODO: Make sure this returns dimensions in DIPS
-      h: 960,
-      w: 480,
+      // h: 960,
+      // w: 480,
       // TODO: implement startdelay since its reccomend param
       // both linearity forms are supported so the param is excluded
       // sequence - TODO not yet supported
