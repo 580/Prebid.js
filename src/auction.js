@@ -395,7 +395,7 @@ export function newAuction({adUnits, adUnitCodes, callback, cbTimeout, labels, a
   function getBidsReceivedByUnitCode(code) {
     return _bidsReceived.filter(bid => bid.adUnitCode === code);
   }
-  
+
   events.on(CONSTANTS.EVENTS.SEAT_NON_BID, (event) => {
     if (event.auctionId === _auctionId) {
       addNonBids(event.seatnonbid)
