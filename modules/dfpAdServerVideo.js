@@ -286,7 +286,7 @@ function getCustParams(bid, options, urlCustParams) {
   const adUnit = options && options.adUnit;
   if (adUnit) {
     if (!options.noTargeting) { // YMPB
-      let allTargeting = targeting.getAllTargeting(adUnit.code);
+      let allTargeting = targeting.getAllTargeting(adUnit.code, undefined, options);
       allTargetingData = (allTargeting) ? allTargeting[adUnit.code] : {};
     }
   }

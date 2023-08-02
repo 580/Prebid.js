@@ -201,28 +201,30 @@ export function newTargeting(auctionManager) {
 
   /**
    * YMPB logic to replace original targeting key-value logic
+   * The function allows to control on sendAllBids on function level
    *
    * @param {*} adUnitCodes
    * @param {*} bidsReceived
    */
-  function getYmpbTargetings(adUnitCodes, bidsReceived) {
+  function getYmpbTargetings(adUnitCodes, bidsReceived, options = {}) {
     // return (config.getConfig('enableSendAllBids') ? getBidLandscapeTargeting(adUnitCodes, bidsReceived) : getDealBids(adUnitCodes, bidsReceived))
+    const enableSendAllVideoBids = options.hasOwnProperty('enableSendAllVideoBids') ? options.enableSendAllVideoBids : config.getConfig('enableSendAllVideoBids');
+    const enableSendAllBids = options.hasOwnProperty('enableSendAllBids') ? options.enableSendAllBids : config.getConfig('enableSendAllBids');
 
-    if (config.getConfig('enableSendAllBids') === false && config.getConfig('enableSendAllVideoBids') === false) {
+    if (enableSendAllBids === false && enableSendAllVideoBids === false) {
       return getDealBids(adUnitCodes, bidsReceived);
     }
 
-    // YMPB
-    const highestCpmVideoBids = config.getConfig('enableSendAllVideoBids') ? [] : getHighestCpmBidsFromBidPool(bidsReceived.filter(bid => bid.mediaType === VIDEO), getHighestCpm, 1);
-    const highestCpmBids = config.getConfig('enableSendAllBids') ? [] : getHighestCpmBidsFromBidPool(bidsReceived.filter(bid => bid.mediaType !== VIDEO), getHighestCpm, 1);
+    const highestCpmVideoBids = enableSendAllVideoBids ? [] : getHighestCpmBidsFromBidPool(bidsReceived.filter(bid => bid.mediaType === VIDEO), getHighestCpm, 1);
+    const highestCpmBids = enableSendAllBids ? [] : getHighestCpmBidsFromBidPool(bidsReceived.filter(bid => bid.mediaType !== VIDEO), getHighestCpm, 1);
 
     const bids = bidsReceived.filter(bid => {
       if (bid.mediaType === VIDEO) {
-        if (config.getConfig('enableSendAllVideoBids') === false) {
+        if (enableSendAllVideoBids === false) {
           return !!find(highestCpmVideoBids, b => b.adId === bid.adId);
         }
       } else {
-        if (config.getConfig('enableSendAllBids') === false) {
+        if (enableSendAllBids === false) {
           return !!find(highestCpmBids, b => b.adId === bid.adId);
         }
       }
@@ -302,17 +304,23 @@ export function newTargeting(auctionManager) {
   /**
    * Returns all ad server targeting for all ad units.
    * @param {string=} adUnitCode
+   * @param {Object[]|undefined} bidsReceived
+   * @param {Object} options this is the options passed in from the `buildDfpVideoUrl` function
    * @return {Object.<string,targeting>} targeting
    */
-  targeting.getAllTargeting = function(adUnitCode, bidsReceived = getBidsReceived()) {
+  targeting.getAllTargeting = function(adUnitCode, bidsReceived, options) {
     const adUnitCodes = getAdUnitCodes(adUnitCode);
+
+    if (typeof bidsReceived === 'undefined') {
+      bidsReceived = getBidsReceived();
+    }
 
     // Get targeting for the winning bid. Add targeting for any bids that have
     // `alwaysUseBid=true`. If sending all bids is enabled, add targeting for losing bids.
     var targeting = getWinningBidTargeting(adUnitCodes, bidsReceived)
       .concat(getCustomBidTargeting(adUnitCodes, bidsReceived))
       // .concat(config.getConfig('enableSendAllBids') ? getBidLandscapeTargeting(adUnitCodes, bidsReceived) : getDealBids(adUnitCodes, bidsReceived))
-      .concat(getYmpbTargetings(adUnitCodes, bidsReceived)) // YMPB: attach bidder specific key-values
+      .concat(getYmpbTargetings(adUnitCodes, bidsReceived, options)) // YMPB: attach bidder specific key-values
       .concat(getAdUnitTargeting(adUnitCodes));
 
     // store a reference of the targeting keys
