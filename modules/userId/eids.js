@@ -170,6 +170,29 @@ export const USER_IDS_CONFIG = {
     }
   },
 
+  // magnite
+  'magnite': {
+    source: 'rubiconproject.com',
+    atype: 3,
+    getValue: function(data) {
+      return data.id;
+    }
+  },
+
+  // indexexchange
+  'index': {
+    source: 'liveintent.indexexchange.com',
+    atype: 3,
+    getValue: function(data) {
+      return data.id;
+    },
+    getUidExt: function(data) {
+      if (data.ext) {
+        return data.ext;
+      }
+    }
+  },
+
   // britepoolId
   'britepoolid': {
     source: 'britepool.com',
