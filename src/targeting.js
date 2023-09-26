@@ -532,6 +532,22 @@ export function newTargeting(auctionManager) {
    */
   targeting.getWinningBids = function(adUnitCode, bidsReceived = getBidsReceived()) {
     const adUnitCodes = getAdUnitCodes(adUnitCode);
+
+    // YMPB bid cache logic for video ads only
+    if (config.getConfig('useBidCache') === true) {
+      let bidsFromOtherAdunits = bidsReceived.filter(bid => bid.mediaType === VIDEO && adUnitCodes.indexOf(bid.adUnitCode) < 0).sort((a, b) => b.cpm - a.cpm);
+
+      // YMPB Switch highest video adUnitCodes
+      adUnitCodes.forEach(adUnitCode => {
+        if (adUnitCode.indexOf('preroll') > 0) {
+          if (bidsFromOtherAdunits.length > 0) {
+            const bid = bidsFromOtherAdunits.shift();
+            bid.adUnitCode = adUnitCode;
+          }
+        }
+      });
+    }
+
     return bidsReceived
       .filter(bid => includes(adUnitCodes, bid.adUnitCode))
       .filter(bid => (bidderSettings.get(bid.bidderCode, 'allowZeroCpmBids') === true) ? bid.cpm >= 0 : bid.cpm > 0)
