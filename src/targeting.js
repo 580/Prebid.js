@@ -548,14 +548,25 @@ export function newTargeting(auctionManager) {
       });
     }
 
-    return bidsReceived
-      .filter(bid => includes(adUnitCodes, bid.adUnitCode))
-      .filter(bid => (bidderSettings.get(bid.bidderCode, 'allowZeroCpmBids') === true) ? bid.cpm >= 0 : bid.cpm > 0)
-      .map(bid => bid.adUnitCode)
-      .filter(uniques)
-      .map(adUnitCode => bidsReceived
-        .filter(bid => bid.adUnitCode === adUnitCode ? bid : null)
-        .reduce(getHighestCpm));
+    // YMPB: Make it easier to debug
+    bidsReceived = bidsReceived.filter(bid => includes(adUnitCodes, bid.adUnitCode));
+    bidsReceived = bidsReceived.filter(bid => (bidderSettings.get(bid.bidderCode, 'allowZeroCpmBids') === true) ? bid.cpm >= 0 : bid.cpm > 0)
+    let bidsReceivedCodes = bidsReceived.map(bid => bid.adUnitCode).filter(uniques);
+    bidsReceived = bidsReceivedCodes.map(adUnitCode => {
+      let _bidsReceived = bidsReceived.filter(bid => bid.adUnitCode === adUnitCode ? bid : null)
+      _bidsReceived = bidsReceived.reduce(getHighestCpm);
+      return _bidsReceived;
+    })
+
+    return bidsReceived;
+    // return bidsReceived
+    //   .filter(bid => includes(adUnitCodes, bid.adUnitCode))
+    //   .filter(bid => (bidderSettings.get(bid.bidderCode, 'allowZeroCpmBids') === true) ? bid.cpm >= 0 : bid.cpm > 0)
+    //   .map(bid => bid.adUnitCode)
+    //   .filter(uniques)
+    //   .map(adUnitCode => bidsReceived
+    //     .filter(bid => bid.adUnitCode === adUnitCode ? bid : null)
+    //     .reduce(getHighestCpm));
   };
 
   /**
