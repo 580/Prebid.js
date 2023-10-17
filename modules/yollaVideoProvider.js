@@ -264,11 +264,11 @@ export function YollavideoProvider(
     }
   }
 
-  function registerPlaylistEventListener(eventHandler) {
+  function offEvent(event, callback) {
     // TODO
   }
 
-  function offEvent(event, callback) {
+  function registerPlaylistEventListener(eventHandler) {
     // TODO
   }
 
@@ -476,19 +476,20 @@ export function YollavideoProvider(
     }
 
     const videoEventName = utils.getVideoEventName(externalEventName);
-    // console.log('addEventListener: videoEventName', externalEventName, '=>', videoEventName);
+    console.log('addEventListener: Event Name', externalEventName, '=>', videoEventName);
 
     /**
      * Some events need to be set after `adsManagerLoaded`
      */
-    if (AD_MANAGER_EVENTS.includes(externalEventName)) {
-      player.$ima.on('adsManagerLoaded', () => {
-        player.$ima.addEventListener(videoEventName, eventHandler);
-        // console.log('adsManagerLoaded', externalEventName, videoEventName, eventHandler);
-      });
-    } else {
-      player.$ima.addEventListener(videoEventName, eventHandler);
-    }
+    // if (AD_MANAGER_EVENTS.includes(externalEventName)) {
+    //   player.$ima.on('adsManagerLoaded', () => {
+    //     player.$ima.addEventListener(videoEventName, eventHandler);
+    //     // console.log('adsManagerLoaded', externalEventName, videoEventName, eventHandler);
+    //   });
+    // } else {
+    //   player.$ima.addEventListener(videoEventName, eventHandler);
+    // }
+    player.$ima.addEventListener(videoEventName, eventHandler);
   }
 
   return {
