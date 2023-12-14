@@ -21,7 +21,7 @@
 
 import { uniques, flatten, logWarn } from './utils.js';
 import { newAuction, getStandardBidderSettings, AUCTION_COMPLETED } from './auction.js';
-import {find} from './polyfill.js';
+import {find, findLast} from './polyfill.js';
 import {AuctionIndex} from './auctionIndex.js';
 import CONSTANTS from './constants.json';
 import {useMetrics} from './utils/perfMetrics.js';
