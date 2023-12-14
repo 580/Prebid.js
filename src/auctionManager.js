@@ -135,6 +135,10 @@ export function newAuctionManager() {
     return find(_auctions, auction => auction.getAuctionId() === auctionId);
   }
 
+  auctionManager.getAuctionByAdUnitCode = function(adUnitCode) { // YMPB
+    return findLast(_auctions, auction => auction.getAdUnitCodes().indexOf(adUnitCode) > -1);
+  }
+
   auctionManager.removeAuction = function(auctionId) { // YMPB
     for (let index = 0; index < _auctions.length; index++) {
       let auction = _auctions[index];
