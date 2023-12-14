@@ -17,6 +17,6 @@ export function findIndex(arr, pred, thisArg) {
   return arr && arr.findIndex(pred, thisArg);
 }
 
-export function findLast(arr, pred, thisArg) {
+export function findLast(arr, pred, thisArg) { // YMPB
   return arr && arr.findLast(pred, thisArg);
 }
