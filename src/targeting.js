@@ -554,7 +554,7 @@ export function newTargeting(auctionManager) {
     let bidsReceivedCodes = bidsReceived.map(bid => bid.adUnitCode).filter(uniques);
     bidsReceived = bidsReceivedCodes.map(adUnitCode => {
       let _bidsReceived = bidsReceived.filter(bid => bid.adUnitCode === adUnitCode ? bid : null)
-      _bidsReceived = bidsReceived.reduce(getHighestCpm);
+      _bidsReceived = _bidsReceived.reduce(getHighestCpm);
       return _bidsReceived;
     })
 
