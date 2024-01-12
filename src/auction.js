@@ -84,7 +84,7 @@ import {userSync} from './userSync.js';
 import {hook} from './hook.js';
 import {find, includes} from './polyfill.js';
 import {OUTSTREAM} from './video.js';
-import {VIDEO} from './mediaTypes.js';
+import {BANNER, VIDEO} from './mediaTypes.js';
 import {auctionManager} from './auctionManager.js';
 import {bidderSettings} from './bidderSettings.js';
 import * as events from './events.js';
@@ -499,6 +499,23 @@ export function auctionCallbacks(auctionDone, auctionInstance, {index = auctionM
   }
 
   function acceptBidResponse(adUnitCode, bid) {
+    // YMPB: triplelift return bid with size larger than requested
+    if (bid && pbjsInstance.getMaxSizeByUnitCode && bid.mediaType === BANNER) {
+      // reject bid if size not match
+      let maxSize = pbjsInstance.getMaxSizeByUnitCode(adUnitCode);
+
+      if (maxSize && maxSize.length > 0) {
+        if (bid.width > maxSize[0] || bid.height > maxSize[1]) {
+          handleBidResponse(adUnitCode, bid, (done) => {
+            logWarn(`Bid from ${bid.bidder || 'unknown bidder'} was rejected: bid size mismatched`, bid)
+            auctionInstance.addBidRejected(bid);
+            done();
+          });
+          return;
+        }
+      }
+    }
+
     handleBidResponse(adUnitCode, bid, (done) => {
       let bidResponse = getPreparedBidForAuction(bid);
 
