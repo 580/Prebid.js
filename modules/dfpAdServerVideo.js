@@ -75,12 +75,11 @@ export function buildDfpVideoUrl(options) {
   }
 
   const adUnit = options.adUnit;
-  // const bid = options.bid || targeting.getWinningBids(adUnit.code)[0]; // YMPB
+  let bid = options.bid || targeting.getWinningBids(adUnit.code)[0]; // YMPB: make it changeable
 
-  let bid = options.bid;
-
-  if (!bid && !options.noTargeting) { // YMPB
-    bid = targeting.getWinningBids(adUnit.code)[0];
+  // YMPB: remove bid if noTargeting
+  if (options.noTargeting) {
+    bid = undefined;
   }
 
   let urlComponents = {};

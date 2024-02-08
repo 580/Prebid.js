@@ -435,7 +435,7 @@ export function YollavideoProvider(
           return {
             error: error,
             sourceError: error,
-            errorCode: error.code,
+            errorCode: error.code || error.message,
             errorMessage: error.message,
           };
         };
