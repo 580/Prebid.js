@@ -189,48 +189,15 @@ export function YollavideoProvider(
   }
 
   function getOrtbVideo() {
-    let playBackMethod = PLAYBACK_METHODS.CLICK_TO_PLAY;
-    // // returns a boolean or a string with the autoplay strategy
-    // const autoplay = player.autoplay;
-    // const muted = player.muted || autoplay === 'muted';
-    // // check if autoplay is truthy since it may be a bool or string
-    // if (autoplay) {
-    //   playBackMethod = muted ? PLAYBACK_METHODS.AUTOPLAY_MUTED : PLAYBACK_METHODS.AUTOPLAY;
-    // }
+    if (!player) {
+      return;
+    }
 
-    // IMA supports vpaid unless its expliclty turned off
-    // TODO: needs a reference to the imaOptions used at setup to determine if vpaid can be used
-
-    const supportedMediaTypes = [
-      VIDEO_MIME_TYPE.MP4,
-      VIDEO_MIME_TYPE.MPEG,
-      VIDEO_MIME_TYPE.WEBM,
-      VPAID_MIME_TYPE,
-    ];
-
-    const video = {
-      placement: PLACEMENT.INSTREAM,
-      mimes: supportedMediaTypes,
-      protocols: [
-        PROTOCOLS.VAST_2_0,
-        PROTOCOLS.VAST_2_0_WRAPPER,
-        PROTOCOLS.VAST_4_0,
-        PROTOCOLS.VAST_4_0_WRAPPER,
-      ],
-      api: [
-        API_FRAMEWORKS.VPAID_2_0, // TODO: needs a reference to the imaOptions used at setup to determine if vpaid can be used
-        API_FRAMEWORKS.OMID_1_0,
-      ],
+    let video = Object.assign({
       maxextended: -1,
       boxingallowed: 1,
-      playbackmethod: [
-        playBackMethod,
-        // PLAYBACK_METHODS.AUTOPLAY_MUTED,
-        // PLAYBACK_METHODS.CLICK_TO_PLAY,
-        // PLAYBACK_METHODS.CLICK_TO_PLAY_MUTED,
-      ],
       playbackend: PLAYBACK_END.VIDEO_COMPLETION,
-    };
+    }, player.videoConfig);
 
     if (player.isFullscreen()) {
       video.pos = AD_POSITION.FULL_SCREEN;
@@ -297,20 +264,20 @@ export function YollavideoProvider(
         break;
 
       case PLAYBACK_REQUEST:
-        getEventPayload = e => ({ playReason: 'unknown' });
+        getEventPayload = () => ({ playReason: 'unknown' });
         break;
 
       case AD_REQUEST:
         getEventPayload = e => {
-          const adTagUrl = e.AdsRequest.adTagUrl;
+          const adTagUrl = e.detail.adsRequest.adTagUrl;
           adState.updateState({ adTagUrl });
           return { adTagUrl };
         };
         break
 
       case AD_LOADED:
-        getEventPayload = (e) => {
-          const imaAd = e.getAdData && e.getAdData();
+        getEventPayload = e => {
+          const imaAd = e.detail.data;
           adState.updateForEvent(imaAd);
           timeState.clearState();
           return adState.getState();
@@ -325,13 +292,13 @@ export function YollavideoProvider(
 
       case AD_IMPRESSION:
       case AD_CLICK:
-        getEventPayload = () => Object.assign({}, adState.getState(), timeState.getState());
+        getEventPayload = () => {
+          return Object.assign({}, adState.getState(), timeState.getState())
+        };
         break
 
       case AD_TIME:
         getEventPayload = (e) => {
-          // const adTimeEvent = e && e.getAdData && e.getAdData();
-
           timeState.updateForTimeEvent(e.detail);
           return Object.assign({}, adState.getState(), timeState.getState());
         };
@@ -749,7 +716,7 @@ export function adStateFactory() {
     if (skippable) {
       updates.skipafter = event.skipTimeOffset;
     }
-
+    console.log('updateState', updates);
     this.updateState(updates);
   }
 

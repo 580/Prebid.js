@@ -46,7 +46,8 @@ export function debuggingControls({load = debuggingModuleLoader(), hook = getHoo
   let promise = null;
   let enabled = false;
   function waitForDebugging(next, ...args) {
-    return (promise || GreedyPromise.resolve()).then(() => next.apply(this, args))
+    // return (promise || GreedyPromise.resolve()).then(() => next.apply(this, args))
+    return GreedyPromise.resolve().then(() => next.apply(this, args)) // YMPB: not working if Ad Blocker enabled
   }
   function enable() {
     if (!enabled) {

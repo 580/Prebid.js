@@ -13,6 +13,9 @@ import {ajaxBuilder} from './ajax.js';
 import {config} from './config.js';
 import {auctionManager} from './auctionManager.js';
 
+// YMPB: adding UUID_MARKER
+const UUID_MARKER = 'pb_uuid';
+
 /**
  * Might be useful to be configurable in the future
  * Depending on publisher needs
@@ -46,9 +49,15 @@ function wrapURI(uri, impUrl) {
   // Technically, this is vulnerable to cross-script injection by sketchy vastUrl bids.
   // We could make sure it's a valid URI... but since we're loading VAST XML from the
   // URL they provide anyway, that's probably not a big deal.
+
+  // YMPB: adding pb_uuid
+  const wraperIdRegex = new RegExp(`[?&]${UUID_MARKER}(=([^&#]*)|&|#|$)`);
+  const result = wraperIdRegex.exec(uri);
+  let wrapperId = result ? ` id="${result[2]}"` : '';
+
   let vastImp = (impUrl) ? `<![CDATA[${impUrl}]]>` : ``;
   return `<VAST version="3.0">
-    <Ad>
+    <Ad${wrapperId}>
       <Wrapper>
         <AdSystem>prebid.org wrapper</AdSystem>
         <VASTAdTagURI><![CDATA[${uri}]]></VASTAdTagURI>

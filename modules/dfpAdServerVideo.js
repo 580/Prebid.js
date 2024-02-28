@@ -141,6 +141,11 @@ export function buildDfpVideoUrl(options) {
     }
   }
 
+  // YMPB notes: temo fixing for video module not setWinning bids
+  if (bid && !bid.trackingId) {
+    auctionManager.addWinningBid(bid);
+  }
+
   return buildUrl(Object.assign({
     protocol: 'https',
     host: 'securepubads.g.doubleclick.net',

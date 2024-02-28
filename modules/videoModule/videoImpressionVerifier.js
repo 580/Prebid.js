@@ -51,6 +51,7 @@ export function videoImpressionVerifierFactory(isCacheUsed) {
 }
 
 export function videoImpressionVerifier(vastXmlEditor_, bidTracker_) {
+  // debugger
   const verifier = baseImpressionVerifier(bidTracker_);
   const superTrackBid = verifier.trackBid;
   const vastXmlEditor = vastXmlEditor_;
@@ -78,12 +79,14 @@ export function videoImpressionVerifier(vastXmlEditor_, bidTracker_) {
 }
 
 export function cachedVideoImpressionVerifier(vastXmlEditor_, bidTracker_) {
+  // debugger
   const verifier = baseImpressionVerifier(bidTracker_);
   const superTrackBid = verifier.trackBid;
   const superGetBidIdentifiers = verifier.getBidIdentifiers;
   const vastXmlEditor = vastXmlEditor_;
 
   verifier.trackBid = function (bid, globalAdUnits) {
+    // debugger
     const adIdOverride = superTrackBid(bid);
     let { vastXml, vastUrl, adId, adUnitCode } = bid;
     const adUnit = find(globalAdUnits, adUnit => adUnitCode === adUnit.code);
@@ -137,17 +140,32 @@ export function baseImpressionVerifier(bidTracker_) {
 
   function trackBid(bid) {
     let { adId, adUnitCode, requestId, auctionId } = bid;
-    const trackingId = PB_PREFIX + generateUUID(10 ** 13);
+    // const trackingId = PB_PREFIX + generateUUID(10 ** 13);
+    const trackingId = PB_PREFIX + adId; // YMPB use bid adId instead of using generateUUID
+    bid.trackingId = trackingId; // YMPB adding trackingId to bid
     bidTracker.store(trackingId, { adId, adUnitCode, requestId, auctionId });
+    // console.log(' adding trackBid', adId, trackingId, bidTracker);
     return trackingId;
   }
 
   function getBidIdentifiers(adId, adTagUrl, adWrapperIds) {
+    console.log('getBidIdentifiers', adId, adTagUrl, adWrapperIds);
     return bidTracker.remove(adId) || getBidForAdTagUrl(adTagUrl) || getBidForAdWrappers(adWrapperIds);
+  }
+
+  // YMPB
+  function addTrack(bid) {
+    let trackingId = bid.trackingId;
+    if (trackingId) {
+      let { adId, adUnitCode, requestId, auctionId } = bid;
+      bidTracker.store(trackingId, { adId, adUnitCode, requestId, auctionId });
+    }
+    return trackingId;
   }
 
   return {
     trackBid,
+    addTrack, // YMPB allow to insert record for existing bid
     getBidIdentifiers
   };
 
@@ -174,7 +192,7 @@ export function baseImpressionVerifier(bidTracker_) {
     }
 
     for (const wrapperId in adWrapperIds) {
-      const bidInfo = bidTracker.remove(wrapperId);
+      const bidInfo = bidTracker.remove(adWrapperIds[wrapperId]); // YMPB: fix wrapperId is index, not the value
       if (bidInfo) {
         return bidInfo;
       }

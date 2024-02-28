@@ -45,7 +45,7 @@ export function PbVideo(videoCore_, getConfig_, pbGlobal_, pbEvents_, videoEvent
   let videoImpressionVerifier;
 
   function init() {
-    const cache = getConfig('cache');
+    const cache = getConfig('cache') || {url: 'https://prebid.adnxs.com/pbc/v1/cache'}; // YMPB: make it work with cache
     videoImpressionVerifier = videoImpressionVerifierFactory(!!cache);
     getConfig(videoKey, ({ video }) => {
       video.providers.forEach(provider => {
@@ -69,7 +69,7 @@ export function PbVideo(videoCore_, getConfig_, pbGlobal_, pbEvents_, videoEvent
     requestBids.before(beforeBidsRequested, 40);
 
     pbEvents.on(CONSTANTS.EVENTS.BID_ADJUSTMENT, function (bid) {
-      videoImpressionVerifier.trackBid(bid);
+      videoImpressionVerifier.trackBid(bid, pbGlobal.adUnits); // YMPB: adding pbGlobal.adUnits, for cachedVideoImpressionVerifier
     });
 
     pbEvents.on(getExternalVideoEventName(AD_IMPRESSION), function (payload) {
@@ -78,6 +78,23 @@ export function PbVideo(videoCore_, getConfig_, pbGlobal_, pbEvents_, videoEvent
 
     pbEvents.on(getExternalVideoEventName(AD_ERROR), function (payload) {
       triggerVideoBidEvent(BID_ERROR, payload);
+    });
+
+    // YMPB: update wrapperId store
+    pbEvents.on(CONSTANTS.EVENTS.SET_TARGETING, function(payload) {
+      for (const key in payload) {
+        if (Object.hasOwnProperty.call(payload, key)) {
+          const kvs = payload[key] || {};
+          const adId = kvs[CONSTANTS.TARGETING_KEYS.AD_ID];
+          if (adId) {
+            const pbGlobal = getGlobal();
+            const bid = pbGlobal.findBidByAdId(adId);
+            if (bid) {
+              videoImpressionVerifier.addTrack(bid);
+            }
+          }
+        }
+      }
     });
   }
 

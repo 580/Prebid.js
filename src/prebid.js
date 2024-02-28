@@ -973,6 +973,17 @@ pbjsInstance.getAllWinningBids = function () {
   return auctionManager.getAllWinningBids();
 };
 
+// YMPB: for adding wrapperId
+pbjsInstance.findBidByAdId = function (adId) {
+  const bid = auctionManager.findBidByAdId(adId);
+  if (bid) {
+    let { adId, adUnitCode, requestId, auctionId, trackingId } = bid;
+    return { adId, adUnitCode, requestId, auctionId, trackingId };
+  }
+
+  return null;
+};
+
 /**
  * Get all of the bids that have won their respective auctions.
  * @return {Array<AdapterBidResponse>} A list of bids that have won their respective auctions.

@@ -154,6 +154,9 @@ const _public = (function () {
   return _public;
 }());
 
+// YMPB: adding video event allows to set event listener before video module was loaded
+_public.addEvents(['videoAdLoaded', 'videoAdError', 'videoAdComplete']);
+
 utils._setEventEmitter(_public.emit.bind(_public));
 
 export const {on, off, get, getEvents, emit, addEvents} = _public;

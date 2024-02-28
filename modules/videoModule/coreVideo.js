@@ -237,4 +237,4 @@ function attachVideoProvider(submoduleFactory) {
   videoVendorDirectory[submoduleFactory.vendorCode] = submoduleFactory;
 }
 
-module('video', attachVideoProvider);
+module('video', attachVideoProvider, {postInstallAllowed: true}); // YMPB: adding postInstallAllowed
