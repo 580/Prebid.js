@@ -57,6 +57,9 @@ export function videoImpressionVerifier(vastXmlEditor_, bidTracker_) {
   const vastXmlEditor = vastXmlEditor_;
 
   verifier.trackBid = function(bid) {
+    if (bid.mediaType !== 'video') { // YMPB
+      return;
+    }
     let { vastXml, vastUrl } = bid;
     if (!vastXml && !vastUrl) {
       return;
@@ -87,6 +90,10 @@ export function cachedVideoImpressionVerifier(vastXmlEditor_, bidTracker_) {
 
   verifier.trackBid = function (bid, globalAdUnits) {
     // debugger
+    if (bid.mediaType !== 'video') { // YMPB
+      return;
+    }
+
     const adIdOverride = superTrackBid(bid);
     let { vastXml, vastUrl, adId, adUnitCode } = bid;
     const adUnit = find(globalAdUnits, adUnit => adUnitCode === adUnit.code);
