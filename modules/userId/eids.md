@@ -10,7 +10,7 @@ userIdAsEids = [
         }]
     },
     {
-        source: 'trustpid.com',
+        source: 'utiq.com',
         uids: [{
             id: 'some-random-id-value',
             atype: 1
@@ -31,7 +31,8 @@ userIdAsEids = [
             id: 'some-random-id-value',
             atype: 1,
             ext: {
-                rtiPartner: 'TDID'
+                rtiPartner: 'TDID',
+                provider: 'liveintent.com'
             }
         }]
     },
@@ -77,6 +78,7 @@ userIdAsEids = [
         uids: [{
             id: 'the-ids-object-stringified',
             atype: 1
+        }]
     },
 
     {
@@ -110,7 +112,10 @@ userIdAsEids = [
         source: 'bidswitch.net',
         uids: [{
             id: 'some-random-id-value',
-            atype: 3
+            atype: 3,
+            ext: {
+                provider: 'liveintent.com'
+            }
         }]
     },
     
@@ -118,15 +123,65 @@ userIdAsEids = [
         source: 'liveintent.indexexchange.com',
         uids: [{
             id: 'some-random-id-value',
-            atype: 3
+            atype: 3,
+            ext: {
+                provider: 'liveintent.com'
+            }
         }]
     },
+
+    {
+        source: 'liveintent.sovrn.com'',
+        uids: [{
+            id: 'some-random-id-value',
+            atype: 3,
+            ext: {
+                provider: 'liveintent.com'
+            }
+        }]
+    },
+
+    {
+        source: 'openx.net'',
+        uids: [{
+            id: 'some-random-id-value',
+            atype: 3,
+            ext: {
+                provider: 'liveintent.com'
+            }
+        }]
+    },
+
+    {
+        source: 'pubmatic.com'',
+        uids: [{
+            id: 'some-random-id-value',
+            atype: 3,
+            ext: {
+                provider: 'liveintent.com'
+            }
+        }]
+    },   
 
     {
         source: 'media.net',
         uids: [{
             id: 'some-random-id-value',
-            atype: 3
+            atype: 3,
+            ext: {
+                provider: 'liveintent.com'
+            }
+        }]
+    },
+    
+    {
+        source: 'rubiconproject.com',
+        uids: [{
+            id: 'some-random-id-value',
+            atype: 3,
+            ext: {
+                provider: 'liveintent.com'
+            }
         }]
     },
 
@@ -270,6 +325,20 @@ userIdAsEids = [
         uids: [{
             id: 'some-random-id-value',
             atype: 3
+        }]
+    },
+    {
+        source: 'euid.eu',
+        uids: [{
+            id: 'some-random-id-value',
+            atype: 3
+        }]
+    },
+    {
+        source: 'mygaru.com',
+        uids: [{
+            id: 'some-random-id-value',
+            atype: 1
         }]
     }
 ]
