@@ -93,11 +93,6 @@ export function buildDfpVideoUrl(options) {
     bid = undefined;
   }
 
-  // YMPB notes: temo fixing for video module not setWinning bids
-  if (bid && !bid.trackingId) {
-    auctionManager.addWinningBid(bid);
-  }
-
   let urlComponents = {};
 
   if (options.url) {
@@ -210,6 +205,11 @@ export function buildDfpVideoUrl(options) {
     queryParams.ppsj = btoa(JSON.stringify({
       PublisherProvidedTaxonomySignals: signals
     }))
+  }
+
+  // YMPB notes: temo fixing for video module not setWinning bids
+  if (bid && !bid.trackingId) {
+    auctionManager.addWinningBid(bid);
   }
 
   return buildUrl(Object.assign({
