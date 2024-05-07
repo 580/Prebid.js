@@ -76,6 +76,7 @@ export const TARGETING_KEYS = {
   UUID: 'hb_uuid',
   CACHE_ID: 'hb_cache_id',
   CACHE_HOST: 'hb_cache_host',
+  CACHE_PATH: 'hb_cache_path', // YMPB adding path key for video bid
   ADOMAIN: 'hb_adomain',
   ACAT: 'hb_acat',
   CRID: 'hb_crid',
@@ -90,7 +91,8 @@ export const DEFAULT_TARGETING_KEYS = {
   DEAL: 'hb_deal',
   FORMAT: 'hb_format',
   UUID: 'hb_uuid',
-  CACHE_HOST: 'hb_cache_host'
+  CACHE_HOST: 'hb_cache_host',
+  CACHE_PATH: 'hb_cache_path', // YMPB adding path key for video bid
 };
 
 export const NATIVE_KEYS = {
