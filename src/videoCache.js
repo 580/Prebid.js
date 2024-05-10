@@ -14,7 +14,8 @@ import {config} from './config.js';
 import {auctionManager} from './auctionManager.js';
 
 // YMPB: adding UUID_MARKER
-const UUID_MARKER = 'pb_uuid';
+const PB_PREFIX = 'pb_';
+const UUID_MARKER = PB_PREFIX + 'uuid';
 
 /**
  * Might be useful to be configurable in the future
@@ -54,11 +55,11 @@ function wrapURI(uri, impTrackerURLs) {
   // YMPB: adding pb_uuid
   const wraperIdRegex = new RegExp(`[?&]${UUID_MARKER}(=([^&#]*)|&|#|$)`);
   const result = wraperIdRegex.exec(uri);
-  let wrapperId = result ? ` id="${result[2]}"` : '';
+  let wrapperId = result ? `id="${result[2]}"` : '';
 
   let impressions = impTrackerURLs ? impTrackerURLs.map(trk => `<Impression><![CDATA[${trk}]]></Impression>`).join('') : '';
   return `<VAST version="3.0">
-    <Ad${wrapperId}>
+    <Ad ${wrapperId}>
       <Wrapper>
         <AdSystem>prebid.org wrapper</AdSystem>
         <VASTAdTagURI><![CDATA[${uri}]]></VASTAdTagURI>
@@ -69,6 +70,19 @@ function wrapURI(uri, impTrackerURLs) {
   </VAST>`;
 }
 
+// YMPB: replace Ad from XML
+function replaceXmlAdId(vastXml, adId) {
+  if (!vastXml || !adId) {
+    return vastXml;
+  }
+
+  let wrapperId = `id="${PB_PREFIX}${adId}"`;
+
+  // \sid(=?([^"'\s>]*)|"")
+  vastXml = vastXml.replace(/<Ad\b[^>]*>/i, `<Ad ${wrapperId}>`);
+  return vastXml;
+}
+
 /**
  * Wraps a bid in the format expected by the prebid-server endpoints, or returns null if
  * the bid can't be converted cleanly.
@@ -77,7 +91,16 @@ function wrapURI(uri, impTrackerURLs) {
  * @param index
  */
 function toStorageRequest(bid, {index = auctionManager.index} = {}) {
-  const vastValue = bid.vastXml ? bid.vastXml : wrapURI(bid.vastUrl, bid.vastImpUrl);
+  // const vastValue = bid.vastXml ? bid.vastXml : wrapURI(bid.vastUrl, bid.vastImpUrl);
+  // YMPB: prefer cache with a vastURL
+  let vastValue = '';
+  if (bid.vastUrl) {
+    const vastUrl = bid.vastUrl + `&${UUID_MARKER}=${PB_PREFIX}${bid.adId}}`;
+    vastValue = wrapURI(vastUrl, bid.vastImpUrl);
+  } else {
+    vastValue = replaceXmlAdId(bid.vastXml, bid.adId);
+  }
+
   const auction = index.getAuction(bid);
   const ttlWithBuffer = Number(bid.ttl) + ttlBufferInSeconds;
   let payload = {

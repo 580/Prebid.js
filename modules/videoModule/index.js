@@ -3,7 +3,7 @@ import { find } from '../../src/polyfill.js';
 import * as events from '../../src/events.js';
 import {mergeDeep, logWarn, logError} from '../../src/utils.js';
 import { getGlobal } from '../../src/prebidGlobal.js';
-import { EVENTS } from '../../src/constants.js';
+import { EVENTS, TARGETING_KEYS } from '../../src/constants.js';
 import {
   videoEvents,
   AUCTION_AD_LOAD_ATTEMPT,
@@ -84,11 +84,11 @@ export function PbVideo(videoCore_, getConfig_, pbGlobal_, pbEvents_, videoEvent
     });
 
     // YMPB: update wrapperId store
-    pbEvents.on(CONSTANTS.EVENTS.SET_TARGETING, function(payload) {
+    pbEvents.on(EVENTS.SET_TARGETING, function(payload) {
       for (const key in payload) {
         if (Object.hasOwnProperty.call(payload, key)) {
           const kvs = payload[key] || {};
-          const adId = kvs[CONSTANTS.TARGETING_KEYS.AD_ID];
+          const adId = kvs[TARGETING_KEYS.AD_ID];
           if (adId) {
             const pbGlobal = getGlobal();
             const bid = pbGlobal.findBidByAdId(adId);
