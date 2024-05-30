@@ -56,7 +56,6 @@ function wrapURI(uri, impTrackerURLs) {
   const wraperIdRegex = new RegExp(`[?&]${UUID_MARKER}(=([^&#]*)|&|#|$)`);
   const result = wraperIdRegex.exec(uri);
   let wrapperId = result ? `id="${result[2]}"` : '';
-
   let impressions = impTrackerURLs ? impTrackerURLs.map(trk => `<Impression><![CDATA[${trk}]]></Impression>`).join('') : '';
   return `<VAST version="3.0">
     <Ad ${wrapperId}>
@@ -95,7 +94,7 @@ function toStorageRequest(bid, {index = auctionManager.index} = {}) {
   // YMPB: prefer cache with a vastURL
   let vastValue = '';
   if (bid.vastUrl) {
-    const vastUrl = bid.vastUrl + `&${UUID_MARKER}=${PB_PREFIX}${bid.adId}}`;
+    const vastUrl = bid.vastUrl + `&${UUID_MARKER}=${PB_PREFIX}${bid.adId}`;
     vastValue = wrapURI(vastUrl, bid.vastImpUrl);
   } else {
     vastValue = replaceXmlAdId(bid.vastXml, bid.adId);
