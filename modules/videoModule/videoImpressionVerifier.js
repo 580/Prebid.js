@@ -1,6 +1,7 @@
 import { find } from '../../src/polyfill.js';
 import { vastXmlEditorFactory } from '../../libraries/video/shared/vastXmlEditor.js';
 import { generateUUID } from '../../src/utils.js';
+import { getWrapperAdIdFromBid } from '../../src/videoCache.js'; // YMPB
 
 export const PB_PREFIX = 'pb_';
 export const UUID_MARKER = PB_PREFIX + 'uuid';
@@ -148,7 +149,8 @@ export function baseImpressionVerifier(bidTracker_) {
   function trackBid(bid) {
     let { adId, adUnitCode, requestId, auctionId } = bid;
     // const trackingId = PB_PREFIX + generateUUID(10 ** 13);
-    const trackingId = PB_PREFIX + adId; // YMPB use bid adId instead of using generateUUID
+    // const trackingId = PB_PREFIX + adId; // YMPB use bid adId instead of using generateUUID
+    const trackingId = bid.trackingId || getWrapperAdIdFromBid(bid);
     bid.trackingId = trackingId; // YMPB adding trackingId to bid
     bidTracker.store(trackingId, { adId, adUnitCode, requestId, auctionId });
     // console.log(' adding trackBid', adId, trackingId, bidTracker);

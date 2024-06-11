@@ -70,16 +70,39 @@ function wrapURI(uri, impTrackerURLs) {
 }
 
 // YMPB: replace Ad from XML
-function replaceXmlAdId(vastXml, adId) {
-  if (!vastXml || !adId) {
+function replaceXmlAdId(vastXml, wrapperId) {
+  if (!vastXml || !wrapperId) {
     return vastXml;
   }
 
-  let wrapperId = `id="${PB_PREFIX}${adId}"`;
-
+  // let wrapperId = `id="${PB_PREFIX}${adId}"`;
   // \sid(=?([^"'\s>]*)|"")
+
   vastXml = vastXml.replace(/<Ad\b[^>]*>/i, `<Ad ${wrapperId}>`);
   return vastXml;
+}
+
+// YMPB
+export function getWrapperAdIdFromBid(bid) {
+  if (bid.trackingId) {
+    return bid.trackingId;
+  }
+
+  // decide adWrapper for a bid.
+  let adWrapperId = `${PB_PREFIX}${bid.adId}`;
+
+  if (bid.vastUrl) {
+    return adWrapperId;
+  }
+
+  let matchedId = bid.vastXml && bid.vastXml.match(/<Ad.+id=("|')(\w+)(\1)[^>]*>/i);
+
+  if (matchedId) {
+    // use existing adWrapperId
+    adWrapperId = matchedId[2];
+  }
+
+  return adWrapperId;
 }
 
 /**
@@ -93,11 +116,15 @@ function toStorageRequest(bid, {index = auctionManager.index} = {}) {
   // const vastValue = bid.vastXml ? bid.vastXml : wrapURI(bid.vastUrl, bid.vastImpUrl);
   // YMPB: prefer cache with a vastURL
   let vastValue = '';
+  let adWrapperId = getWrapperAdIdFromBid(bid);
+  bid.trackingId = adWrapperId;
+
   if (bid.vastUrl) {
-    const vastUrl = bid.vastUrl + `&${UUID_MARKER}=${PB_PREFIX}${bid.adId}`;
+    const vastUrl = bid.vastUrl + `&${UUID_MARKER}=${adWrapperId}`;
     vastValue = wrapURI(vastUrl, bid.vastImpUrl);
   } else {
-    vastValue = replaceXmlAdId(bid.vastXml, bid.adId);
+    // Replace ad ID
+    vastValue = replaceXmlAdId(bid.vastXml, adWrapperId);
   }
 
   const auction = index.getAuction(bid);
