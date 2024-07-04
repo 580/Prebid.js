@@ -3,7 +3,7 @@
  */
 import {config} from '../src/config.js';
 import {getHook, hook, module} from '../src/hook.js';
-import {deepSetValue, logInfo, logWarn, mergeDeep, sizesToSizeTuples, deepAccess, deepEqual} from '../src/utils.js';
+import {deepSetValue, logInfo, logWarn, mergeDeep, sizesToSizeTuples, deepAccess, deepEqual, safeJSONParse} from '../src/utils.js';
 import {IMP, PBS, registerOrtbProcessor, RESPONSE} from '../src/pbjsORTB.js';
 import * as events from '../src/events.js';
 import {EVENTS} from '../src/constants.js';
@@ -141,6 +141,11 @@ function append(target, key, value) {
 }
 
 function setFPD(target, {ortb2, ortb2Imp}) {
+  // YMPB: target may return in string
+  if (typeof target ==='string') {
+    target = safeJSONParse(target) || {};
+  }
+  
   ortb2 != null && deepSetValue(target, 'prebid.ortb2', mergeDeep({}, ortb2, target.prebid?.ortb2));
   ortb2Imp != null && deepSetValue(target, 'prebid.ortb2Imp', mergeDeep({}, ortb2Imp, target.prebid?.ortb2Imp));
   return target;
