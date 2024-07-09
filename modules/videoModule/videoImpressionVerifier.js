@@ -95,9 +95,15 @@ export function cachedVideoImpressionVerifier(vastXmlEditor_, bidTracker_) {
       return;
     }
 
+    // YMPB: return if GAM is disabled
+    const adUnit = find(globalAdUnits, adUnit => adUnitCode === adUnit.code);
+    if (!adUnit || !adUnit.video) {
+      return;
+    }
+
     const adIdOverride = superTrackBid(bid);
     let { vastXml, vastUrl, adId, adUnitCode } = bid;
-    const adUnit = find(globalAdUnits, adUnit => adUnitCode === adUnit.code);
+    // const adUnit = find(globalAdUnits, adUnit => adUnitCode === adUnit.code); // YMPB: move the line to above
     const videoConfig = adUnit && adUnit.video;
     const adServerConfig = videoConfig && videoConfig.adServer;
     const trackingConfig = adServerConfig && adServerConfig.tracking;
