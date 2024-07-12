@@ -194,8 +194,8 @@ export function YollavideoProvider(
     }
 
     let video = Object.assign({
-      maxextended: -1,
-      boxingallowed: 1,
+      // maxextended: -1,
+      // boxingallowed: 1,
       playbackend: PLAYBACK_END.VIDEO_COMPLETION,
     }, player.videoConfig);
 

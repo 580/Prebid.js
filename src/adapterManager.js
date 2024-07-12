@@ -574,6 +574,7 @@ adapterManager.aliasBidAdapter = function (bidderCode, alias, options) {
   }
 };
 
+// YMPB
 adapterManager.resolveAlias = function (alias) {
   let code = alias;
   let visited;

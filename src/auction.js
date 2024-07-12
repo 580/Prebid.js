@@ -492,6 +492,20 @@ export function auctionCallbacks(auctionDone, auctionInstance, {index = auctionM
   }
 
   function acceptBidResponse(adUnitCode, bid) {
+    // YMPB: attach ymAlias
+    let bidRequest = null;
+    let bidderRequests = auctionInstance.getBidRequests();
+    bidderRequests.forEach(bidSeat => {
+      if (bidSeat.bidderCode === bid.bidderCode) {
+        bidRequest = find(bidSeat.bids, _b => _b.bidId === bid.requestId);
+        return !bidRequest;
+      }
+    });
+    
+    if (bidRequest && bidRequest.ymAlias) {
+      bid.ymAlias = bidRequest.ymAlias;
+    }
+
     // YMPB: triplelift return bid with size larger than requested
     if (bid && pbjsInstance.getMaxSizeByUnitCode && bid.mediaType === BANNER) {
       // reject bid if size not match
