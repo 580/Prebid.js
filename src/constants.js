@@ -81,6 +81,7 @@ export const TARGETING_KEYS = {
   CACHE_ID: 'hb_cache_id',
   CACHE_HOST: 'hb_cache_host',
   CACHE_PATH: 'hb_cache_path', // YMPB adding path key for video bid
+  YM_ALIAS: 'yalias', // YMPB support legacy bidder alias
   ADOMAIN: 'hb_adomain',
   ACAT: 'hb_acat',
   CRID: 'hb_crid',
@@ -97,6 +98,7 @@ export const DEFAULT_TARGETING_KEYS = {
   UUID: 'hb_uuid',
   CACHE_HOST: 'hb_cache_host',
   CACHE_PATH: 'hb_cache_path', // YMPB adding path key for video bid
+  YM_ALIAS: 'yalias', // YMPB support legacy bidder alias
 };
 
 export const NATIVE_KEYS = {
