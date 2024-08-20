@@ -406,6 +406,27 @@ pbjsInstance.setTargetingForGPTAsync = function (adUnit, customSlotMatching) {
   // get our ad unit codes
   let targetingSet = targeting.getAllTargeting(adUnit);
 
+  // YMPB: remove 0 CPM, hb_pb reduce logic
+  if (pbjsInstance.getOption) {
+    for (const adUnitCode in targetingSet) {
+      if (Object.hasOwnProperty.call(targetingSet, adUnitCode)) {
+        // const targetings = targetingSet[adUnitCode];
+        let hbPb = +targetingSet[adUnitCode].hb_pb;
+
+        if (hbPb > 0) {
+          let hbPbReduce = pbjsInstance.getOption('YMPB_PB_REDUCE');
+          hbPb = hbPb > hbPbReduce ? (hbPb * 100 - hbPbReduce * 100) / 100 : 0;
+
+          if (hbPb < pbjsInstance.getOption('YMPB_CPM_TARGET_MIN')) {
+            targetingSet[adUnitCode] = {}; // NOTES: add the key with empty objce, so it includes all of the adUnitCode availabe from the auction
+          } else {
+            targetingSet[adUnitCode].hb_pb = hbPb.toFixedNoRounding(2);
+          }
+        }
+      }
+    }
+  }
+
   // first reset any old targeting
   targeting.resetPresetTargeting(adUnit, customSlotMatching);
 
