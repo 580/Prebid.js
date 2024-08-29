@@ -492,7 +492,7 @@ export function auctionCallbacks(auctionDone, auctionInstance, {index = auctionM
   }
 
   function acceptBidResponse(adUnitCode, bid) {
-    // YMPB: attach ymAlias
+    // YMPB: attach ymAlias and parentBidderCode
     let bidRequest = null;
     let bidderRequests = auctionInstance.getBidRequests();
     bidderRequests.forEach(bidSeat => {
@@ -501,9 +501,14 @@ export function auctionCallbacks(auctionDone, auctionInstance, {index = auctionM
         return !bidRequest;
       }
     });
-    
-    if (bidRequest && bidRequest.ymAlias) {
-      bid.ymAlias = bidRequest.ymAlias;
+
+    if (bidRequest) {
+      if (bidRequest.ymAlias) {
+        bid.ymAlias = bidRequest.ymAlias;
+      }
+      if (bidRequest.parentBidderCode) {
+        bid.parentBidderCode = bidRequest.parentBidderCode;
+      }
     }
 
     // YMPB: triplelift return bid with size larger than requested
