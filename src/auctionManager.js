@@ -22,7 +22,6 @@
 
 import { uniques, logWarn } from './utils.js';
 import { newAuction, getStandardBidderSettings, AUCTION_COMPLETED } from './auction.js';
-import {find, findLast} from './polyfill.js';
 import {AuctionIndex} from './auctionIndex.js';
 import { BID_STATUS, JSON_MAPPING } from './constants.js';
 import {useMetrics} from './utils/perfMetrics.js';
@@ -166,7 +165,18 @@ export function newAuctionManager() {
   auctionManager.getAuction = getAuction; // YMPB
 
   auctionManager.getAuctionByAdUnitCode = function(adUnitCode) { // YMPB
-    return findLast(_auctions.toArray(), auction => auction.getAdUnitCodes().indexOf(adUnitCode) > -1);
+    // return findLast(_auctions.toArray(), auction => auction.getAdUnitCodes().indexOf(adUnitCode) > -1);
+    let _auctionArr = _auctions.toArray();
+    let _len = _auctionArr.length;
+
+    for (let index = _len; index > 0; index--) {
+      const _auction = _auctionArr[index - 1];
+      if (_auction.getAdUnitCodes().indexOf(adUnitCode) > -1) {
+        return _auction;
+      }
+    }
+
+    return null;
   }
 
   auctionManager.removeAuction = function(auctionId) { // YMPB
