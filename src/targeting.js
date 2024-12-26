@@ -21,9 +21,18 @@ import {ADPOD, VIDEO} from './mediaTypes.js';
 import {hook} from './hook.js';
 import {bidderSettings} from './bidderSettings.js';
 import {find, includes} from './polyfill.js';
-import {BID_STATUS, DEFAULT_TARGETING_KEYS, JSON_MAPPING, NATIVE_KEYS, STATUS, TARGETING_KEYS} from './constants.js';
+import {
+  BID_STATUS,
+  DEFAULT_TARGETING_KEYS,
+  EVENTS,
+  JSON_MAPPING,
+  NATIVE_KEYS,
+  STATUS,
+  TARGETING_KEYS
+} from './constants.js';
 import {getHighestCpm, getOldestHighestCpmBid} from './utils/reducers.js';
 import {getTTL} from './bidTTL.js';
+import * as events from './events.js';
 
 var pbTargetingKeys = [];
 
@@ -465,26 +474,58 @@ export function newTargeting(auctionManager) {
     return targetingObj;
   }
 
-  /**
-   * Sets targeting for DFP
-   * @param {Object.<string,Object.<string,string>>} targetingConfig
-   */
-  targeting.setTargetingForGPT = function(targetingConfig, customSlotMatching) {
-    Object.entries(getGPTSlotsForAdUnits(Object.keys(targetingConfig), customSlotMatching)).forEach(([targetId, slots]) => {
+  targeting.setTargetingForGPT = hook('sync', function (adUnit, customSlotMatching) {
+    // get our ad unit codes
+    let targetingSet = targeting.getAllTargeting(adUnit);
+
+    // YMPB: remove 0 CPM, hb_pb reduce logic
+    for (const adUnitCode in targetingSet) {
+      if (Object.hasOwnProperty.call(targetingSet, adUnitCode)) {
+        // const targetings = targetingSet[adUnitCode];
+        let hbPb = +targetingSet[adUnitCode].hb_pb;
+
+        if (hbPb > 0) {
+          let hbPbReduce = config.getOption('YMPB_PB_REDUCE');
+          hbPb = hbPb > hbPbReduce ? (hbPb * 100 - hbPbReduce * 100) / 100 : 0;
+
+          if (hbPb < config.getOption('YMPB_CPM_TARGET_MIN')) {
+            targetingSet[adUnitCode] = {}; // NOTES: add the key with empty objce, so it includes all of the adUnitCode availabe from the auction
+          } else {
+            targetingSet[adUnitCode].hb_pb = hbPb.toFixedNoRounding(2);
+          }
+        }
+      }
+    }
+
+    let resetMap = Object.fromEntries(pbTargetingKeys.map(key => [key, null]));
+
+    Object.entries(getGPTSlotsForAdUnits(Object.keys(targetingSet), customSlotMatching)).forEach(([targetId, slots]) => {
       slots.forEach(slot => {
-        Object.keys(targetingConfig[targetId]).forEach(key => {
-          let value = targetingConfig[targetId][key];
+        // now set new targeting keys
+        Object.keys(targetingSet[targetId]).forEach(key => {
+          let value = targetingSet[targetId][key];
           if (typeof value === 'string' && value.indexOf(',') !== -1) {
             // due to the check the array will be formed only if string has ',' else plain string will be assigned as value
             value = value.split(',');
           }
-          targetingConfig[targetId][key] = value;
+          targetingSet[targetId][key] = value;
         });
-        logMessage(`Attempting to set targeting-map for slot: ${slot.getSlotElementId()} with targeting-map:`, targetingConfig[targetId]);
-        slot.updateTargetingFromMap(targetingConfig[targetId])
+        logMessage(`Attempting to set targeting-map for slot: ${slot.getSlotElementId()} with targeting-map:`, targetingSet[targetId]);
+        slot.updateTargetingFromMap(Object.assign({}, resetMap, targetingSet[targetId]))
       })
     })
-  };
+
+    Object.keys(targetingSet).forEach((adUnitCode) => {
+      Object.keys(targetingSet[adUnitCode]).forEach((targetingKey) => {
+        if (targetingKey === 'hb_adid') {
+          auctionManager.setStatusForBids(targetingSet[adUnitCode][targetingKey], BID_STATUS.BID_TARGETING_SET);
+        }
+      });
+    });
+
+    // emit event
+    events.emit(EVENTS.SET_TARGETING, targetingSet);
+  }, 'setTargetingForGPT');
 
   /**
    * normlizes input to a `adUnit.code` array
@@ -537,7 +578,7 @@ export function newTargeting(auctionManager) {
   targeting.getWinningBids = function(adUnitCode, bidsReceived = getBidsReceived()) {
     const adUnitCodes = getAdUnitCodes(adUnitCode);
 
-    // YMPB bid cache logic for video ads only
+    // YMPB: bid cache logic for video ads only
     if (config.getConfig('useBidCache') === true) {
       let bidsFromOtherAdunits = bidsReceived.filter(bid => bid.mediaType === VIDEO && adUnitCodes.indexOf(bid.adUnitCode) < 0).sort((a, b) => b.cpm - a.cpm);
 

@@ -28,6 +28,9 @@ import {
   mergeDeep
 } from './utils.js';
 import {DEBUG_MODE} from './constants.js';
+import { getGlobal } from './prebidGlobal.js'; // YMPB
+
+const pbjsInstance = getGlobal(); // YMPB
 
 const DEFAULT_DEBUG = getParameterByName(DEBUG_MODE).toUpperCase() === 'TRUE';
 const DEFAULT_BIDDER_TIMEOUT = 3000;
@@ -39,6 +42,8 @@ const DEFAULT_MAX_NESTED_IFRAMES = 10;
 const DEFAULT_MAXBID_VALUE = 5000
 
 const DEFAULT_TIMEOUTBUFFER = 400;
+
+const DEFAULT_IFRAMES_CONFIG = {};
 
 export const RANDOM = 'random';
 const FIXED = 'fixed';
@@ -163,7 +168,10 @@ export function newConfig() {
       maxNestedIframes: DEFAULT_MAX_NESTED_IFRAMES,
 
       // default max bid
-      maxBid: DEFAULT_MAXBID_VALUE
+      maxBid: DEFAULT_MAXBID_VALUE,
+      userSync: {
+        topics: DEFAULT_IFRAMES_CONFIG
+      }
     };
 
     Object.defineProperties(newConfig,
@@ -527,6 +535,11 @@ export function newConfig() {
     currBidder = null;
   }
 
+  // YMPB: getOption
+  function getOption(key) {
+    return pbjsInstance.getOption(key);
+  }
+
   resetConfig();
 
   return {
@@ -545,6 +558,7 @@ export function newConfig() {
     setBidderConfig,
     getBidderConfig,
     mergeBidderConfig,
+    getOption, // YMPB
   };
 }
 
