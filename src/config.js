@@ -28,9 +28,6 @@ import {
   mergeDeep
 } from './utils.js';
 import {DEBUG_MODE} from './constants.js';
-import { getGlobal } from './prebidGlobal.js'; // YMPB
-
-const pbjsInstance = getGlobal(); // YMPB
 
 const DEFAULT_DEBUG = getParameterByName(DEBUG_MODE).toUpperCase() === 'TRUE';
 const DEFAULT_BIDDER_TIMEOUT = 3000;
@@ -535,11 +532,6 @@ export function newConfig() {
     currBidder = null;
   }
 
-  // YMPB: getOption
-  function getOption(key) {
-    return pbjsInstance.getOption(key);
-  }
-
   resetConfig();
 
   return {
@@ -558,7 +550,6 @@ export function newConfig() {
     setBidderConfig,
     getBidderConfig,
     mergeBidderConfig,
-    getOption, // YMPB
   };
 }
 
