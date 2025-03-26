@@ -398,14 +398,14 @@ export function newAuction({adUnits, adUnitCodes, callback, cbTimeout, labels, a
   // YMPB
   function emptyAuction() {
     _bidderRequests.length = 0;
-    _bidsReceived.length = 0;
     _noBids.length = 0;
     _winningBids.length = 0;
+    _bidsReceived.clear();
   }
 
   // YMPB
   function getBidsReceivedByUnitCode(code) {
-    return _bidsReceived.filter(bid => bid.adUnitCode === code);
+    return _bidsReceived.toArray().filter(bid => bid.adUnitCode === code);
   }
 
   events.on(EVENTS.SEAT_NON_BID, (event) => {

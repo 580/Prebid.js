@@ -325,6 +325,7 @@ export function newTargeting(auctionManager) {
         targeting[code] = {};
       }
     });
+    debugger;
 
     return targeting;
   };
@@ -351,6 +352,7 @@ export function newTargeting(auctionManager) {
     targeting.forEach(adUnitCode => {
       updatePBTargetingKeys(adUnitCode);
     });
+    debugger;
 
     return targeting;
   }
