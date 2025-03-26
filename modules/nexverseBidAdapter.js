@@ -1,4 +1,4 @@
-/* eslint-disable camelcase */
+
 
 import { registerBidder } from '../src/adapters/bidderFactory.js';
 import { BANNER, VIDEO, NATIVE } from '../src/mediaTypes.js';
@@ -12,7 +12,7 @@ import { getUserSyncs } from '../libraries/teqblazeUtils/bidderUtils.js';
 import { getOsVersion } from '../libraries/advangUtils/index.js';
 
 const BIDDER_CODE = 'nexverse';
-const BIDDER_ENDPOINT = 'https://rtb.nexverse.ai/';
+const BIDDER_ENDPOINT = 'https://rtb.nexverse.ai';
 const SUPPORTED_MEDIA_TYPES = [BANNER, VIDEO, NATIVE];
 const DEFAULT_CURRENCY = 'USD';
 const BID_TTL = 300;
