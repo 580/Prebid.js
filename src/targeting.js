@@ -291,8 +291,19 @@ export function newTargeting(auctionManager) {
     const sendAllBids = config.getConfig('enableSendAllBids');
     const bidLimitConfigValue = config.getConfig('sendBidsControl.bidLimit');
     const adUnitBidLimit = (sendAllBids && (bidLimit || bidLimitConfigValue)) || 0;
+    // const { customKeysByUnit, filteredBids } = getfilteredBidsAndCustomKeys(adUnitCodes, bidsReceived); // YMPB
+    // const bidsSorted = getHighestCpmBidsFromBidPool(filteredBids, winReducer, adUnitBidLimit, undefined, winSorter); // YMPB
+
+    // YMPB: add enableSendAllVideoBids
+    const sendAllVideoBids = config.getConfig('enableSendAllVideoBids');
+    const adUnitVideoBidLimit = (sendAllVideoBids && (bidLimit || bidLimitConfigValue)) || 0;
     const { customKeysByUnit, filteredBids } = getfilteredBidsAndCustomKeys(adUnitCodes, bidsReceived);
-    const bidsSorted = getHighestCpmBidsFromBidPool(filteredBids, winReducer, adUnitBidLimit, undefined, winSorter);
+    const videoBids = filteredBids.filter(bid => bid.mediaType === FEATURES.VIDEO);
+    const bannerBids = filteredBids.filter(bid => bid.mediaType !== FEATURES.VIDEO);
+    const videoBidsSorted = getHighestCpmBidsFromBidPool(videoBids, winReducer, adUnitBidLimit, undefined, winSorter);
+    const bannerBidsSorted = getHighestCpmBidsFromBidPool(bannerBids, winReducer, adUnitVideoBidLimit, undefined, winSorter);
+    const bidsSorted = videoBidsSorted.concat(bannerBidsSorted);
+
     let targeting = getTargetingLevels(bidsSorted, customKeysByUnit, adUnitCodes);
 
     const defaultKeys = Object.keys(Object.assign({}, DEFAULT_TARGETING_KEYS, NATIVE_KEYS));
@@ -352,7 +363,6 @@ export function newTargeting(auctionManager) {
     targeting.forEach(adUnitCode => {
       updatePBTargetingKeys(adUnitCode);
     });
-    debugger;
 
     return targeting;
   }
