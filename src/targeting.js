@@ -336,7 +336,6 @@ export function newTargeting(auctionManager) {
         targeting[code] = {};
       }
     });
-    debugger;
 
     return targeting;
   };
