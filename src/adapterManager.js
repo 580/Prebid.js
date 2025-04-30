@@ -264,6 +264,10 @@ adapterManager.makeBidRequests = hook('sync', function (adUnits, auctionStart, a
     }
     // filter out bidders that cannot participate in the auction
     au.bids = au.bids.filter((bid) => !bid.bidder || dep.isAllowed(ACTIVITY_FETCH_BIDS, activityParams(MODULE_TYPE_BIDDER, bid.bidder)))
+    // YMPB: no bids refreshrate
+    if (YMPB.checkBidderTimeout) {
+      au.bids = au.bids.filter((bid) => !YMPB.checkBidderTimeout(au.code, bid));
+    }
     incrementRequestsCounter(au.code);
   });
 
