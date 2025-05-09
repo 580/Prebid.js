@@ -624,7 +624,14 @@ export function handleFetchResponse(fetchResponse) {
   const fetchData = parseFloorData(floorResponse, 'fetch');
   if (fetchData) {
     // set .data to it
-    _floorsConfig.data = fetchData;
+    // YMPB: change floor price logic
+    // _floorsConfig.data = fetchData;
+    _floorsConfig.data.floorsSchemaVersion = fetchData.floorsSchemaVersion || 1;
+    _floorsConfig.data.location = fetchData.location;
+    _floorsConfig.data.modelVersion = fetchData.modelVersion;
+    _floorsConfig.data.values = _floorsConfig.data.values || {};
+    Object.assign(_floorsConfig.data.values, fetchData.values);
+
     // set skipRate override if necessary
     _floorsConfig.skipRate = isNumber(fetchData.skipRate) ? fetchData.skipRate : _floorsConfig.skipRate;
     _floorsConfig.floorProvider = fetchData.floorProvider || _floorsConfig.floorProvider;
