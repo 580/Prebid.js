@@ -399,6 +399,10 @@ export function pickRandomModel(modelGroups, weightSum) {
  * @summary Updates the adUnits accordingly and returns the necessary floorsData for the current auction
  */
 export function createFloorsDataForAuction(adUnits, auctionId) {
+  // YMPB: update floor price
+  if (getGlobal().updateFloorPrice) {
+    getGlobal().updateFloorPrice(adUnits);
+  }
   let resolvedFloorsData = deepClone(_floorsConfig);
   // if using schema 2 pick a model here:
   if (deepAccess(resolvedFloorsData, 'data.floorsSchemaVersion') === 2) {
