@@ -123,6 +123,10 @@ export function AdPlayerProProvider(config, adPlayerPro_, callbackStorage_, util
     setupPlayer(playerConfig, adTagUrl || options.adXml)
   }
 
+  function setAdXml(vastXml) {
+    setupPlayer(playerConfig, vastXml);
+  }
+
   function onEvent(externalEventName, callback, basePayload) {
     if (externalEventName === SETUP_COMPLETE) {
       setupCompleteCallbacks.push(callback);
@@ -160,7 +164,6 @@ export function AdPlayerProProvider(config, adPlayerPro_, callbackStorage_, util
         return;
     }
 
-
     const playerEventName = utils.getPlayerEvent(externalEventName);
     const eventHandler = getEventHandler(externalEventName, callback, basePayload, getEventPayload)
     player && player.on(playerEventName, eventHandler);
@@ -192,6 +195,7 @@ export function AdPlayerProProvider(config, adPlayerPro_, callbackStorage_, util
     getOrtbVideo,
     getOrtbContent,
     setAdTagUrl,
+    setAdXml,
     onEvent,
     offEvent,
     destroy

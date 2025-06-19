@@ -7,6 +7,12 @@ import 'src/prebid.js';
 let expect = require('chai').expect;
 
 describe('consentManagement', function () {
+  function mockCMP(cmpResponse) {
+    return function(...args) {
+      args[2](Object.assign({eventStatus: 'tcloaded'}, cmpResponse), true);
+    }
+  }
+
   describe('setConsentConfig tests:', function () {
     describe('empty setConsentConfig value', function () {
       beforeEach(function () {
@@ -26,7 +32,6 @@ describe('consentManagement', function () {
         expect(consentConfig.cmpHandler).to.be.equal('iab');
         expect(consentConfig.cmpTimeout).to.be.equal(10000);
         expect(gdprScope).to.be.equal(false);
-        sinon.assert.callCount(utils.logInfo, 3);
       });
 
       it('should exit consent manager if config is not an object', async function () {
@@ -294,6 +299,24 @@ describe('consentManagement', function () {
         expect(gdprDataHandler.ready).to.be.true;
       });
 
+      it('should poll again to check if it appears later', async () => {
+        await setConsentConfig({
+          cmpApi: 'iab',
+          timeout: 10,
+        });
+        expect(await runHook()).to.be.false;
+        try {
+          window.__tcfapi = mockCMP({
+            gdprApplies: true,
+            tcString: 'xyz',
+          });
+          expect(await runHook()).to.be.true;
+          expect(gdprDataHandler.getConsentData().consentString).to.eql('xyz')
+        } finally {
+          delete window.__tcfapi
+        }
+      })
+
       it('should not trip when adUnits have no size', async () => {
         await setConsentConfig(staticConfig);
         expect(await runHook({adUnits: [{code: 'test', mediaTypes: {video: {}}}]})).to.be.true;
@@ -321,12 +344,6 @@ describe('consentManagement', function () {
     describe('already known consentData:', function () {
       let cmpStub = sinon.stub();
 
-      function mockCMP(cmpResponse) {
-        return function(...args) {
-          args[2](Object.assign({eventStatus: 'tcloaded'}, cmpResponse), true);
-        }
-      }
-
       beforeEach(function () {
         window.__tcfapi = function () { };
       });
@@ -347,7 +364,7 @@ describe('consentManagement', function () {
         cmpStub = sinon.stub(window, '__tcfapi').callsFake(mockCMP(testConsentData));
         await setConsentConfig(goodConfig);
         expect(await runHook()).to.be.true;
-        cmpStub.reset();
+        cmpStub.resetHistory();
 
         expect(await runHook()).to.be.true;
         let consent = gdprDataHandler.getConsentData();
@@ -469,7 +486,9 @@ describe('consentManagement', function () {
 
       afterEach(function () {
         config.resetConfig();
-        cmpStub.restore();
+        if (window.__tcfapi) {
+          cmpStub.restore();
+        }
         utils.logError.restore();
         utils.logWarn.restore();
         resetConsentData();
@@ -564,7 +583,7 @@ describe('consentManagement', function () {
           sinon.assert.notCalled(utils.logWarn);
           sinon.assert.notCalled(utils.logError);
 
-          [utils.logWarn, utils.logError].forEach((stub) => stub.reset());
+          [utils.logWarn, utils.logError].forEach((stub) => stub.resetHistory());
 
           expect(await runHook({bidsBackHandler: () => bidsBackHandlerReturn = true})).to.be.false;
           let consent = gdprDataHandler.getConsentData();

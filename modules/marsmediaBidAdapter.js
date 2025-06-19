@@ -1,4 +1,3 @@
-
 'use strict';
 import { deepAccess, getDNT, parseSizesInput, isArray, getWindowTop, deepSetValue, triggerPixel, getWindowSelf, isPlainObject } from '../src/utils.js';
 import {registerBidder} from '../src/adapters/bidderFactory.js';
@@ -370,7 +369,7 @@ function MarsmediaAdapter() {
 
   function _getViewability(element, topWin, { w, h } = {}) {
     return topWin.document.visibilityState === 'visible'
-      ? percentInView(element, topWin, { w, h })
+      ? percentInView(element, { w, h })
       : 0;
   }
 }

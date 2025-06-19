@@ -15,7 +15,6 @@ import * as events from './events.js';
 import { hook } from './hook.js';
 import { ADPOD } from './mediaTypes.js';
 import { NATIVE_TARGETING_KEYS } from './native.js';
-import { find, includes } from './polyfill.js';
 import {
   deepAccess,
   deepClone,
@@ -52,7 +51,7 @@ export const TARGETING_KEYS_ARR = Object.keys(TARGETING_KEYS).map(
 const isBidNotExpired = (bid) => (bid.responseTimestamp + getBufferedTTL(bid) * 1000) > timestamp();
 
 // return bids whose status is not set. Winning bids can only have a status of `rendered`.
-const isUnusedBid = (bid) => bid && ((bid.status && !includes([BID_STATUS.RENDERED], bid.status)) || !bid.status);
+const isUnusedBid = (bid) => bid && ((bid.status && ![BID_STATUS.RENDERED].includes(bid.status)) || !bid.status);
 
 export let filters = {
   isActualBid(bid) {
@@ -199,7 +198,7 @@ export function newTargeting(auctionManager) {
         const currentKeywords = Object.keys(astTag.keywords);
         const newKeywords = {};
         currentKeywords.forEach((key) => {
-          if (!includes(pbTargetingKeys, key.toLowerCase())) {
+          if (!pbTargetingKeys.includes(key.toLowerCase())) {
             newKeywords[key] = astTag.keywords[key];
           }
         })
@@ -255,7 +254,7 @@ export function newTargeting(auctionManager) {
         // check if key is in default keys, if not, it's custom, we won't remove it.
         const isCustom = defaultKeys.filter(defaultKey => key.indexOf(defaultKeyring[defaultKey]) === 0).length === 0;
         // check if key explicitly allowed, if not, we'll remove it.
-        const found = isCustom || find(allowedKeys, allowedKey => {
+        const found = isCustom || allowedKeys.find(allowedKey => {
           const allowedKeyName = defaultKeyring[allowedKey];
           // we're looking to see if the key exactly starts with one of our default keys.
           // (which hopefully means it's not custom)
@@ -352,12 +351,16 @@ export function newTargeting(auctionManager) {
   }
 
   function getTargetingLevels(bidsSorted, customKeysByUnit, adUnitCodes) {
+    const useAllBidsCustomTargeting = config.getConfig('targetingControls.allBidsCustomTargeting') !== false;
+
     const targeting = getWinningBidTargeting(bidsSorted, adUnitCodes)
-      .concat(getCustomBidTargeting(bidsSorted, customKeysByUnit))
       .concat(getBidderTargeting(bidsSorted))
       .concat(getAdUnitTargeting(adUnitCodes));
 
     // YMPB: TODO: add `getYmpbTargetings`
+    if (useAllBidsCustomTargeting) {
+      targeting.push(...getCustomBidTargeting(bidsSorted, customKeysByUnit))
+    }
 
     targeting.forEach(adUnitCode => {
       updatePBTargetingKeys(adUnitCode);
@@ -372,7 +375,7 @@ export function newTargeting(auctionManager) {
     const alwaysIncludeDeals = config.getConfig('targetingControls.alwaysIncludeDeals');
 
     bidsReceived.forEach(bid => {
-      const adUnitIsEligible = includes(adUnitCodes, bid.adUnitCode);
+      const adUnitIsEligible = adUnitCodes.includes(bid.adUnitCode);
       const cpmAllowed = bidderSettings.get(bid.bidderCode, 'allowZeroCpmBids') === true ? bid.cpm >= 0 : bid.cpm > 0;
       const isPreferredDeal = alwaysIncludeDeals && bid.dealId;
 
@@ -527,6 +530,10 @@ export function newTargeting(auctionManager) {
     let resetMap = Object.fromEntries(pbTargetingKeys.map(key => [key, null]));
 
     Object.entries(getGPTSlotsForAdUnits(Object.keys(targetingSet), customSlotMatching)).forEach(([targetId, slots]) => {
+       if (slots.length > 1) {
+        // This can lead to duplicate impressions. This is existing behavior and changing to only target one slot could be a breaking change for existing integrations.
+        logWarn(`Multiple slots found matching: ${targetId}. Targeting will be set on all matching slots, which can lead to duplicate impressions if more than one are requested from GAM. To resolve this, ensure the arguments to setTargetingForGPTAsync resolve to a single slot by explicitly matching the desired slotElementID.`);
+      }
       slots.forEach(slot => {
       // now set new targeting keys
         Object.keys(targetingSet[targetId]).forEach(key => {
@@ -622,7 +629,7 @@ export function newTargeting(auctionManager) {
     }
 
     return bidsReceived
-      .filter(bid => includes(adUnitCodes, bid.adUnitCode))
+      .filter(bid => adUnitCodes.includes(bid.adUnitCode))
       .filter(bid => (bidderSettings.get(bid.bidderCode, 'allowZeroCpmBids') === true) ? bid.cpm >= 0 : bid.cpm > 0)
       .map(bid => bid.adUnitCode)
       .filter(uniques)

@@ -1,4 +1,3 @@
-import { find } from '../../src/polyfill.js';
 import { vastXmlEditorFactory } from '../../libraries/video/shared/vastXmlEditor.js';
 import { generateUUID } from '../../src/utils.js';
 import { getWrapperAdIdFromBid } from '../../src/videoCache.js'; // YMPB
@@ -97,14 +96,14 @@ export function cachedVideoImpressionVerifier(vastXmlEditor_, bidTracker_) {
 
     // YMPB: return if GAM is disabled
     let adUnitCode = bid.adUnitCode;
-    const adUnit = find(globalAdUnits, adUnit => adUnitCode === adUnit.code);
+    const adUnit = ((globalAdUnits) || []).find(adUnit => adUnitCode === adUnit.code);
     if (!adUnit || !adUnit.video) {
       return;
     }
 
     const adIdOverride = superTrackBid(bid);
     let { vastXml, vastUrl, adId } = bid; // YMPB: remove `, adUnitCode`
-    // const adUnit = find(globalAdUnits, adUnit => adUnitCode === adUnit.code); // YMPB: move the line to above
+    // const adUnit = ((globalAdUnits) || []).find(adUnit => adUnitCode === adUnit.code); // YMPB: move the line to above
     const videoConfig = adUnit && adUnit.video;
     const adServerConfig = videoConfig && videoConfig.adServer;
     const trackingConfig = adServerConfig && adServerConfig.tracking;

@@ -1,4 +1,3 @@
- 
 import {expect} from 'chai';
 import {
   PrebidServer as Adapter,
@@ -682,7 +681,7 @@ describe('S2S Adapter', function () {
       let sandbox, ortb2Fragments, redactorMocks, s2sReq;
 
       beforeEach(() => {
-        sandbox = sinon.sandbox.create();
+        sandbox = sinon.createSandbox();
         redactorMocks = {};
         sandbox.stub(redactor, 'redactor').callsFake((params) => {
           if (!redactorMocks.hasOwnProperty(params.component)) {
@@ -859,7 +858,7 @@ describe('S2S Adapter', function () {
           it('should be set to 0.75 * requestTimeout, if lower than maxTimeout', () => {
             adapter.callBids({...REQUEST, requestBidsTimeout: maxTimeout / 2}, BID_REQUESTS, addBidResponse, done, ajax);
             const req = JSON.parse(server.requests[0].requestBody);
-            expect(req.tmax).to.eql(maxTimeout / 2 * 0.75);
+            expect(req.tmax).to.eql(Math.floor(maxTimeout / 2 * 0.75));
           })
         })
       })
@@ -3270,8 +3269,8 @@ describe('S2S Adapter', function () {
       adapter.callBids(REQUEST, BID_REQUESTS, addBidResponse, done, ajax);
       server.requests[0].respond(200, {}, JSON.stringify(RESPONSE_OPENRTB));
 
-      sinon.assert.calledOnce(events.emit);
-      const event = events.emit.firstCall.args;
+      sinon.assert.calledTwice(events.emit);
+      const event = events.emit.secondCall.args;
       expect(event[0]).to.equal(EVENTS.BIDDER_DONE);
       expect(event[1].bids[0]).to.have.property('serverResponseTimeMs', 8);
 
@@ -3302,7 +3301,7 @@ describe('S2S Adapter', function () {
       const responding = deepClone(nonbidResponse);
       Object.assign(responding.ext.seatnonbid, [{auctionId: 2}])
       server.requests[0].respond(200, {}, JSON.stringify(responding));
-      const event = events.emit.secondCall.args;
+      const event = events.emit.thirdCall.args;
       expect(event[0]).to.equal(EVENTS.SEAT_NON_BID);
       expect(event[1].seatnonbid[0]).to.have.property('auctionId', 2);
       expect(event[1].requestedBidders).to.deep.equal(['appnexus']);
@@ -3319,7 +3318,7 @@ describe('S2S Adapter', function () {
       const responding = deepClone(nonbidResponse);
       Object.assign(responding.ext.seatnonbid, [{auctionId: 2}])
       server.requests[0].respond(200, {}, JSON.stringify(responding));
-      const event = events.emit.thirdCall.args;
+      const event = events.emit.getCall(3).args;
       expect(event[0]).to.equal(EVENTS.PBS_ANALYTICS);
       expect(event[1].seatnonbid[0]).to.have.property('auctionId', 2);
       expect(event[1].requestedBidders).to.deep.equal(['appnexus']);
@@ -3336,10 +3335,24 @@ describe('S2S Adapter', function () {
       const responding = deepClone(atagResponse);
       Object.assign(responding.ext.prebid.analytics.tags, ['stuff'])
       server.requests[0].respond(200, {}, JSON.stringify(responding));
-      const event = events.emit.secondCall.args;
+      const event = events.emit.thirdCall.args;
       expect(event[0]).to.equal(EVENTS.PBS_ANALYTICS);
       expect(event[1].atag[0]).to.deep.equal('stuff');
       expect(event[1].response).to.deep.equal(responding);
+    });
+
+    it('emits the BEFORE_PBS_HTTP event and captures responses', function () {
+      config.setConfig({ CONFIG });
+
+      adapter.callBids(REQUEST, BID_REQUESTS, addBidResponse, done, ajax);
+      server.requests[0].respond(200, {}, JSON.stringify(RESPONSE_OPENRTB));
+
+      sinon.assert.calledTwice(events.emit);
+      const event = events.emit.firstCall.args;
+      expect(event[0]).to.equal(EVENTS.BEFORE_PBS_HTTP);
+      expect(event[1]).to.have.property('requestJson', server.requests[0].requestBody);
+      expect(event[1]).to.have.property('endpointUrl', CONFIG.endpoint.p1Consent);
+      expect(event[1].customHeaders).to.deep.equal({});
     });
 
     it('respects defaultTtl', function () {
@@ -3353,7 +3366,7 @@ describe('S2S Adapter', function () {
       adapter.callBids(s2sBidRequest, BID_REQUESTS, addBidResponse, done, ajax);
       server.requests[0].respond(200, {}, JSON.stringify(RESPONSE_OPENRTB));
 
-      sinon.assert.calledOnce(events.emit);
+      sinon.assert.calledTwice(events.emit);
       const event = events.emit.firstCall.args;
       sinon.assert.calledOnce(addBidResponse);
       const response = addBidResponse.firstCall.args[1];
