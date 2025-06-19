@@ -408,6 +408,10 @@ export function pickRandomModel(modelGroups, weightSum) {
  * @summary Updates the adUnits accordingly and returns the necessary floorsData for the current auction
  */
 export function createFloorsDataForAuction(adUnits, auctionId) {
+  // YMPB: update floor price
+  if (getGlobal().updateFloorPrice) {
+    getGlobal().updateFloorPrice(adUnits);
+  }
   let resolvedFloorsData = deepClone(_floorsConfig);
   // if using schema 2 pick a model here:
   if (deepAccess(resolvedFloorsData, 'data.floorsSchemaVersion') === 2) {
@@ -613,7 +617,14 @@ export function handleFetchResponse(fetchResponse) {
   const fetchData = parseFloorData(floorResponse, 'fetch');
   if (fetchData) {
     // set .data to it
-    _floorsConfig.data = fetchData;
+    // YMPB: change floor price logic
+    // _floorsConfig.data = fetchData;
+    _floorsConfig.data.floorsSchemaVersion = fetchData.floorsSchemaVersion || 1;
+    _floorsConfig.data.location = fetchData.location;
+    _floorsConfig.data.modelVersion = fetchData.modelVersion;
+    _floorsConfig.data.values = _floorsConfig.data.values || {};
+    Object.assign(_floorsConfig.data.values, fetchData.values);
+
     // set skipRate override if necessary
     _floorsConfig.skipRate = isNumber(fetchData.skipRate) ? fetchData.skipRate : _floorsConfig.skipRate;
     _floorsConfig.floorProvider = fetchData.floorProvider || _floorsConfig.floorProvider;

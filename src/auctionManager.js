@@ -162,6 +162,11 @@ export function newAuctionManager() {
     return null;
   }
 
+  auctionManager.getAuctionsByCode = function(adUnitCode, counts) { // YMPB
+    let _auctionArr = _auctions.toArray().filter(_auction => _auction.getAdUnitCodes().indexOf(adUnitCode) > -1);
+    return _auctionArr.splice(-counts);
+  }
+
   auctionManager.removeAuction = function(auctionId) { // YMPB
     let auction = getAuction(auctionId);
 
