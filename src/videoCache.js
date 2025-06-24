@@ -119,24 +119,7 @@ export function getWrapperAdIdFromBid(bid) {
  * @return {Object|null} - The payload to be sent to the prebid-server endpoints, or null if the bid can't be converted cleanly.
  */
 function toStorageRequest(bid, {index = auctionManager.index} = {}) {
-<<<<<<< HEAD
-  // const vastValue = bid.vastXml ? bid.vastXml : wrapURI(bid.vastUrl, bid.vastImpUrl);
-  // YMPB: prefer cache with a vastURL
-  let vastValue = '';
-  let adWrapperId = getWrapperAdIdFromBid(bid);
-  bid.trackingId = adWrapperId;
-
-  if (bid.vastUrl) {
-    const vastUrl = bid.vastUrl + `&${UUID_MARKER}=${adWrapperId}`;
-    vastValue = wrapURI(vastUrl, bid.vastImpUrl);
-  } else {
-    // Replace ad ID
-    vastValue = replaceXmlAdId(bid.vastXml, adWrapperId);
-  }
-
-=======
   const vastValue = getVastXml(bid);
->>>>>>> 9.50.0
   const auction = index.getAuction(bid);
   const ttlWithBuffer = Number(bid.ttl) + ttlBufferInSeconds;
   let payload = {
