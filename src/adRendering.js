@@ -27,6 +27,8 @@ const { AD_RENDER_FAILED, AD_RENDER_SUCCEEDED, STALE_RENDER, BID_WON, EXPIRED_RE
 const { EXCEPTION } = AD_RENDER_FAILED_REASON;
 
 export const getBidToRender = hook('sync', function (adId, forRender = true, override = PbPromise.resolve()) {
+  const _bid = auctionManager.findBidByAdId(adId);
+  console.log('getBidToRender', adId, override, _bid);
   return override
     .then(bid => bid ?? auctionManager.findBidByAdId(adId))
     .catch(() => {})
