@@ -13,7 +13,7 @@ import {
 } from './constants.js';
 import * as events from './events.js';
 import { hook } from './hook.js';
-import { ADPOD } from './mediaTypes.js';
+import { ADPOD, VIDEO } from './mediaTypes.js'; // YMPB: add VIDEO
 import { NATIVE_TARGETING_KEYS } from './native.js';
 import {
   deepAccess,

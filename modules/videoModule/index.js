@@ -248,11 +248,13 @@ export function PbVideo(videoCore_, getConfig_, pbGlobal_, pbEvents_, videoEvent
           adUnit, adServerConfig.baseAdTagUrl, adServerConfig.params
         );
         loadAd(adTagUrl, divId, options);
-        return;
+        // return; // YMPB
+        return true; // YMPB
       }
     }
 
     renderBid(divId, winningBid, options);
+    return true; // YMPB
   }
 
   function getWinningBid(adUnitCode) {

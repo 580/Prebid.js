@@ -20,7 +20,8 @@ import {
   logError,
   logWarn,
   parseSizesInput,
-  parseUrl
+  parseUrl,
+  sortByHighestCpm
 } from '../src/utils.js';
 import {DEFAULT_DFP_PARAMS, DFP_ENDPOINT, gdprParams} from '../libraries/dfpUtils/dfpUtils.js';
 import { vastLocalCache } from '../src/videoCache.js';
@@ -240,8 +241,24 @@ function getCustParams(bid, options, urlCustParams) {
   if (adUnit) {
     if (!options.noTargeting) { // YMPB
       let bids = bid ? [bid] : [];
+      const enableSendAllVideoBids = config.getConfig('enableSendAllVideoBids');
+
+      if (enableSendAllVideoBids) {
+        // bids = targeting.getWinningBids(adUnit.code);
+        const auction = auctionManager.getAuctionByAdUnitCode(adUnit.code);
+        if (auction) {
+          let _bids = auction.getBidsReceivedByUnitCode(adUnit.code);
+
+          if (_bids.length > 0) {
+            _bids.sort(sortByHighestCpm);
+            bids = _bids;
+          }
+        }
+      }
+
       let allTargeting = targeting.getAllTargeting(adUnit.code, undefined, bids);
       allTargetingData = (allTargeting) ? allTargeting[adUnit.code] : {};
+      debugger;
     }
   }
 
