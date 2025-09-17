@@ -110,8 +110,8 @@ export function cachedVideoImpressionVerifier(vastXmlEditor_, bidTracker_) {
     let impressionUrl;
     let impressionId;
     let errorUrl;
-    const impressionTracking = trackingConfig.impression;
-    const errorTracking = trackingConfig.error;
+    const impressionTracking = trackingConfig?.impression;
+    const errorTracking = trackingConfig?.error;
 
     if (impressionTracking) {
       impressionUrl = getTrackingUrl(impressionTracking.getUrl, bid);
