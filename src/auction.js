@@ -171,10 +171,11 @@ export function newAuction({adUnits, adUnitCodes, callback, cbTimeout, labels, a
   function addBidRejected(bidsRejected) { _bidsRejected = _bidsRejected.concat(bidsRejected); }
   function addNoBid(noBid) { _noBids = _noBids.concat(noBid); }
   function removeBidReceived(bid) { // YMPB
-    for (let index = 0; index < _bidsReceived.length; index++) {
-      const _bid = _bidsReceived[index];
+    let _allBidsReceived = _bidsReceived.toArray();
+    for (let index = 0; index < _allBidsReceived.length; index++) {
+      const _bid = _allBidsReceived[index];
       if (bid.adId === _bid.adId) {
-        _bidsReceived.splice(index, 1);
+        _bidsReceived.remove(_bid);
       }
     }
   }
