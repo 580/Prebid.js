@@ -162,7 +162,8 @@ export function resizeRemoteCreative({instl, adId, adUnitCode, width, height}) {
 
   function getElementIdBasedOnAdServer(adId, adUnitCode) {
     if (isGptPubadsDefined()) {
-      return getDfpElementId(adId);
+      // return getDfpElementId(adId);
+      return getYmpbDfpElementId(adUnitCode); // YMPB
     } else if (isApnGetTagDefined()) {
       return getAstElementId(adUnitCode);
     } else {
@@ -176,6 +177,12 @@ export function resizeRemoteCreative({instl, adId, adUnitCode, width, height}) {
         return slot.getTargeting(key).includes(adId);
       });
     });
+    return slot ? slot.getSlotElementId() : null;
+  }
+
+  // YMPB get slot
+  function getYmpbDfpElementId(adUnitCode) {
+    const slot = window.googletag.pubads().getSlots().find(slot => slot.getSlotElementId() === adUnitCode);
     return slot ? slot.getSlotElementId() : null;
   }
 
