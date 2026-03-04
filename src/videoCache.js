@@ -59,10 +59,10 @@ function wrapURI(uri, impTrackerURLs) {
   // YMPB: adding pb_uuid
   const wraperIdRegex = new RegExp(`[?&]${UUID_MARKER}(=([^&#]*)|&|#|$)`);
   const result = wraperIdRegex.exec(uri);
-  let wrapperId = result ? `id="${result[2]}"` : '';
+  let wrapperId = result ? ` id="${result[2]}"` : '';
   let impressions = impTrackerURLs ? impTrackerURLs.map(trk => `<Impression><![CDATA[${trk}]]></Impression>`).join('') : '';
   return `<VAST version="3.0">
-    <Ad ${wrapperId}>
+    <Ad${wrapperId}>
       <Wrapper>
         <AdSystem>prebid.org wrapper</AdSystem>
         <VASTAdTagURI><![CDATA[${uri}]]></VASTAdTagURI>
@@ -74,15 +74,16 @@ function wrapURI(uri, impTrackerURLs) {
 }
 
 // YMPB: replace Ad from XML
-function replaceXmlAdId(vastXml, wrapperId) {
-  if (!vastXml || !wrapperId) {
+function replaceXmlAdId(vastXml, pbUid) {
+  if (!vastXml || !pbUid) {
     return vastXml;
   }
 
   // let wrapperId = `id="${PB_PREFIX}${adId}"`;
   // \sid(=?([^"'\s>]*)|"")
+  const wrapperId = /^\s*id=/.test(pbUid) ? ' ' + pbUid : ` id="${pbUid}"`;
+  vastXml = vastXml.replace(/<Ad\b[^>]*>/i, `<Ad${wrapperId}>`);
 
-  vastXml = vastXml.replace(/<Ad\b[^>]*>/i, `<Ad ${wrapperId}>`);
   return vastXml;
 }
 
