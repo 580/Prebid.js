@@ -29,3 +29,15 @@ export function getSlotAreaSize(adUnitCode) {
 
   return slotSize;
 }
+
+export function checkBidderTimeout(adUnitCode, bid) {
+  try {
+    if (window.YMPB && window.YMPB.checkBidderTimeout) {
+      return window.YMPB.checkBidderTimeout(au.code, bid);
+    }
+  } catch (error) {
+    
+  }
+
+  return false;
+}

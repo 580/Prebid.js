@@ -18,7 +18,7 @@ describe('gumgumAdapter', function () {
   });
 
   describe('isBidRequestValid', function () {
-    let bid = {
+    const bid = {
       'bidder': 'gumgum',
       'params': {
         'inScreen': '10433394',
@@ -44,7 +44,7 @@ describe('gumgumAdapter', function () {
     });
 
     it('should return true when required params found', function () {
-      let invalidBid = Object.assign({}, bid);
+      const invalidBid = Object.assign({}, bid);
       delete invalidBid.params;
       invalidBid.params = {
         'inSlot': '789'
@@ -54,7 +54,7 @@ describe('gumgumAdapter', function () {
     });
 
     it('should return true when inslot sends sizes and trackingid', function () {
-      let invalidBid = Object.assign({}, bid);
+      const invalidBid = Object.assign({}, bid);
       delete invalidBid.params;
       invalidBid.params = {
         'inSlot': '789',
@@ -65,7 +65,7 @@ describe('gumgumAdapter', function () {
     });
 
     it('should return false when no unit type is specified', function () {
-      let invalidBid = Object.assign({}, bid);
+      const invalidBid = Object.assign({}, bid);
       delete invalidBid.params;
       invalidBid.params = {
         'placementId': 0
@@ -74,7 +74,7 @@ describe('gumgumAdapter', function () {
     });
 
     it('should return false when bidfloor is not a number', function () {
-      let invalidBid = Object.assign({}, bid);
+      const invalidBid = Object.assign({}, bid);
       delete invalidBid.params;
       invalidBid.params = {
         'inSlot': '789',
@@ -99,7 +99,40 @@ describe('gumgumAdapter', function () {
   });
 
   describe('buildRequests', function () {
-    let sizesArray = [[300, 250], [300, 600]];
+    const sizesArray = [[300, 250], [300, 600]];
+    const id5Eid = {
+      source: 'id5-sync.com',
+      uids: [{
+        id: 'uid-string',
+        ext: {
+          linkType: 2
+        }
+      }]
+    };
+    const pubProvidedIdEids = [
+      {
+        uids: [
+          {
+            ext: {
+              stype: 'ppuid',
+            },
+            id: 'aac4504f-ef89-401b-a891-ada59db44336',
+          },
+        ],
+        source: 'audigent.com',
+      },
+      {
+        uids: [
+          {
+            ext: {
+              stype: 'ppuid',
+            },
+            id: 'y-zqTHmW9E2uG3jEETC6i6BjGcMhPXld2F~A',
+          },
+        ],
+        source: 'crwdcntrl.net',
+      },
+    ];
     const bidderRequest = {
       ortb2: {
         site: {
@@ -123,7 +156,7 @@ describe('gumgumAdapter', function () {
       }
     };
 
-    let bidRequests = [
+    const bidRequests = [
       {
         gppString: 'DBACNYA~CPXxRfAPXxRfAAfKABENB-CgAAAAAAAAAAYgAAAAAAAA~1YNN',
         gppSid: [7],
@@ -136,62 +169,37 @@ describe('gumgumAdapter', function () {
             sizes: sizesArray
           }
         },
-        userId: {
-          id5id: {
-            uid: 'uid-string',
-            ext: {
-              linkType: 2
-            }
-          }
-        },
-        pubProvidedId: [
-          {
-            uids: [
-              {
-                ext: {
-                  stype: 'ppuid',
-                },
-                id: 'aac4504f-ef89-401b-a891-ada59db44336',
-              },
-            ],
-            source: 'sonobi.com',
-          },
-          {
-            uids: [
-              {
-                ext: {
-                  stype: 'ppuid',
-                },
-                id: 'y-zqTHmW9E2uG3jEETC6i6BjGcMhPXld2F~A',
-              },
-            ],
-            source: 'aol.com',
-          },
-        ],
+        userIdAsEids: [id5Eid, ...pubProvidedIdEids],
         adUnitCode: 'adunit-code',
         sizes: sizesArray,
         bidId: '30b31c1838de1e',
-        schain: {
-          ver: '1.0',
-          complete: 1,
-          nodes: [
-            {
-              asi: 'exchange1.com',
-              sid: '1234',
-              hp: 1,
-              rid: 'bid-request-1',
-              name: 'publisher',
-              domain: 'publisher.com'
-            },
-            {
-              asi: 'exchange2.com',
-              sid: 'abcd',
-              hp: 1,
-              rid: 'bid-request-2',
-              name: 'intermediary',
-              domain: 'intermediary.com'
+        ortb2: {
+          source: {
+            ext: {
+              schain: {
+                ver: '1.0',
+                complete: 1,
+                nodes: [
+                  {
+                    asi: 'exchange1.com',
+                    sid: '1234',
+                    hp: 1,
+                    rid: 'bid-request-1',
+                    name: 'publisher',
+                    domain: 'publisher.com'
+                  },
+                  {
+                    asi: 'exchange2.com',
+                    sid: 'abcd',
+                    hp: 1,
+                    rid: 'bid-request-2',
+                    name: 'intermediary',
+                    domain: 'intermediary.com'
+                  }
+                ]
+              }
             }
-          ]
+          }
         }
       }
     ];
@@ -221,13 +229,139 @@ describe('gumgumAdapter', function () {
     it('should set pubProvidedId if the uid and  pubProvidedId are available', function () {
       const request = { ...bidRequests[0] };
       const bidRequest = spec.buildRequests([request])[0];
-      expect(bidRequest.data.pubProvidedId).to.equal(JSON.stringify(bidRequests[0].userId.pubProvidedId));
+      expect(bidRequest.data.pubProvidedId).to.equal(JSON.stringify(pubProvidedIdEids));
+    });
+    it('should filter pubProvidedId entries by allowed sources', function () {
+      const filteredRequest = {
+        ...bidRequests[0],
+        userIdAsEids: [
+          {
+            source: 'audigent.com',
+            uids: [{ id: 'ppid-1', ext: { stype: 'ppuid' } }]
+          },
+          {
+            source: 'sonobi.com',
+            uids: [{ id: 'ppid-2', ext: { stype: 'ppuid' } }]
+          }
+        ]
+      };
+      const bidRequest = spec.buildRequests([filteredRequest])[0];
+      const pubProvidedIds = JSON.parse(bidRequest.data.pubProvidedId);
+      expect(pubProvidedIds.length).to.equal(1);
+      expect(pubProvidedIds[0].source).to.equal('audigent.com');
+    });
+    it('should not set pubProvidedId when all sources are filtered out', function () {
+      const filteredRequest = {
+        ...bidRequests[0],
+        userIdAsEids: [{
+          source: 'sonobi.com',
+          uids: [{ id: 'ppid-2', ext: { stype: 'ppuid' } }]
+        }]
+      };
+      const bidRequest = spec.buildRequests([filteredRequest])[0];
+      expect(bidRequest.data.pubProvidedId).to.equal(undefined);
     });
     it('should set id5Id and id5IdLinkType if the uid and  linkType are available', function () {
       const request = { ...bidRequests[0] };
       const bidRequest = spec.buildRequests([request])[0];
-      expect(bidRequest.data.id5Id).to.equal(bidRequests[0].userId.id5id.uid);
-      expect(bidRequest.data.id5IdLinkType).to.equal(bidRequests[0].userId.id5id.ext.linkType);
+      expect(bidRequest.data.id5Id).to.equal(id5Eid.uids[0].id);
+      expect(bidRequest.data.id5IdLinkType).to.equal(id5Eid.uids[0].ext.linkType);
+    });
+    it('should use bidderRequest.ortb2.user.ext.eids when bid-level eids are not available', function () {
+      const request = { ...bidRequests[0], userIdAsEids: undefined };
+      const fakeBidderRequest = {
+        ...bidderRequest,
+        ortb2: {
+          ...bidderRequest.ortb2,
+          user: {
+            ext: {
+              eids: [{
+                source: 'liveramp.com',
+                uids: [{
+                  id: 'fallback-idl-env'
+                }]
+              }]
+            }
+          }
+        }
+      };
+      const bidRequest = spec.buildRequests([request], fakeBidderRequest)[0];
+      expect(bidRequest.data.idl_env).to.equal('fallback-idl-env');
+    });
+    it('should prioritize bidderRequest.ortb2.user.ext.eids over bid-level eids', function () {
+      const request = {
+        ...bidRequests[0],
+        userIdAsEids: [{
+          source: 'liveramp.com',
+          uids: [{ id: 'bid-level-idl-env' }]
+        }]
+      };
+      const fakeBidderRequest = {
+        ...bidderRequest,
+        ortb2: {
+          ...bidderRequest.ortb2,
+          user: {
+            ext: {
+              eids: [{
+                source: 'liveramp.com',
+                uids: [{ id: 'ortb2-level-idl-env' }]
+              }]
+            }
+          }
+        }
+      };
+      const bidRequest = spec.buildRequests([request], fakeBidderRequest)[0];
+      expect(bidRequest.data.idl_env).to.equal('ortb2-level-idl-env');
+    });
+    it('should keep identity output consistent for prebid10 ortb2 eids input', function () {
+      const request = { ...bidRequests[0], userIdAsEids: undefined };
+      const fakeBidderRequest = {
+        ...bidderRequest,
+        ortb2: {
+          ...bidderRequest.ortb2,
+          user: {
+            ext: {
+              eids: [
+                {
+                  source: 'uidapi.com',
+                  uids: [{ id: 'uid2-token', atype: 3 }]
+                },
+                {
+                  source: 'liveramp.com',
+                  uids: [{ id: 'idl-envelope', atype: 1 }]
+                },
+                {
+                  source: 'adserver.org',
+                  uids: [{ id: 'tdid-value', atype: 1, ext: { rtiPartner: 'TDID' } }]
+                },
+                {
+                  source: 'id5-sync.com',
+                  uids: [{ id: 'id5-value', atype: 1, ext: { linkType: 2 } }]
+                },
+                {
+                  source: 'audigent.com',
+                  uids: [{ id: 'ppid-1', atype: 1, ext: { stype: 'ppuid' } }]
+                },
+                {
+                  source: 'sonobi.com',
+                  uids: [{ id: 'ppid-2', atype: 1, ext: { stype: 'ppuid' } }]
+                }
+              ]
+            }
+          }
+        }
+      };
+      const bidRequest = spec.buildRequests([request], fakeBidderRequest)[0];
+
+      // Expected identity payload shape from legacy GumGum request fields.
+      expect(bidRequest.data.uid2).to.equal('uid2-token');
+      expect(bidRequest.data.idl_env).to.equal('idl-envelope');
+      expect(bidRequest.data.tdid).to.equal('tdid-value');
+      expect(bidRequest.data.id5Id).to.equal('id5-value');
+      expect(bidRequest.data.id5IdLinkType).to.equal(2);
+      const pubProvidedId = JSON.parse(bidRequest.data.pubProvidedId);
+      expect(pubProvidedId.length).to.equal(1);
+      expect(pubProvidedId[0].source).to.equal('audigent.com');
     });
 
     it('should set pubId param if found', function () {
@@ -344,20 +478,20 @@ describe('gumgumAdapter', function () {
       expect(bidRequest.data.ae).to.equal(true);
     });
 
-    it('should set the global placement id (gpid) if in pbadslot property', function () {
-      const pbadslot = 'abc123'
-      const req = { ...bidRequests[0], ortb2Imp: { ext: { data: { pbadslot } } } }
+    it('should set the global placement id (gpid) if in gpid property', function () {
+      const gpid = 'abc123'
+      const req = { ...bidRequests[0], ortb2Imp: { ext: { data: {}, gpid } } }
       const bidRequest = spec.buildRequests([req])[0];
       expect(bidRequest.data).to.have.property('gpid');
-      expect(bidRequest.data.gpid).to.equal(pbadslot);
+      expect(bidRequest.data.gpid).to.equal(gpid);
     });
 
     it('should set the global placement id (gpid) if media type is video', function () {
-      const pbadslot = 'cde456'
-      const req = { ...bidRequests[0], ortb2Imp: { ext: { data: { pbadslot } } }, params: zoneParam, mediaTypes: vidMediaTypes }
+      const gpid = 'cde456'
+      const req = { ...bidRequests[0], ortb2Imp: { ext: { data: {}, gpid } }, params: zoneParam, mediaTypes: vidMediaTypes }
       const bidRequest = spec.buildRequests([req])[0];
       expect(bidRequest.data).to.have.property('gpid');
-      expect(bidRequest.data.gpid).to.equal(pbadslot);
+      expect(bidRequest.data.gpid).to.equal(gpid);
     });
 
     it('should set the bid floor if getFloor module is not present but static bid floor is defined', function () {
@@ -608,7 +742,7 @@ describe('gumgumAdapter', function () {
     it('should set pubProvidedId if the uid and  pubProvidedId are available', function () {
       const request = { ...bidRequests[0] };
       const bidRequest = spec.buildRequests([request])[0];
-      expect(bidRequest.data.pubProvidedId).to.equal(JSON.stringify(bidRequests[0].userId.pubProvidedId));
+      expect(bidRequest.data.pubProvidedId).to.equal(JSON.stringify(pubProvidedIdEids));
     });
 
     it('should add gdpr consent parameters if gdprConsent is present', function () {
@@ -708,14 +842,40 @@ describe('gumgumAdapter', function () {
       expect(bidRequest.data.uspConsent).to.eq(uspConsentObj.uspConsent);
     });
     it('should add a tdid parameter if request contains unified id from TradeDesk', function () {
-      const unifiedId = {
-        'userId': {
-          'tdid': 'tradedesk-id'
-        }
-      }
-      const request = Object.assign(unifiedId, bidRequests[0]);
+      const tdidEid = {
+        source: 'adserver.org',
+        uids: [{
+          id: 'tradedesk-id',
+          ext: {
+            rtiPartner: 'TDID'
+          }
+        }]
+      };
+      const request = Object.assign({}, bidRequests[0], { userIdAsEids: [...bidRequests[0].userIdAsEids, tdidEid] });
       const bidRequest = spec.buildRequests([request])[0];
-      expect(bidRequest.data.tdid).to.eq(unifiedId.userId.tdid);
+      expect(bidRequest.data.tdid).to.eq(tdidEid.uids[0].id);
+    });
+    it('should add a tdid parameter when TDID uid is not the first uid in adserver.org', function () {
+      const tdidEid = {
+        source: 'adserver.org',
+        uids: [
+          {
+            id: 'non-tdid-first',
+            ext: {
+              rtiPartner: 'NOT_TDID'
+            }
+          },
+          {
+            id: 'tradedesk-id',
+            ext: {
+              rtiPartner: 'TDID'
+            }
+          }
+        ]
+      };
+      const request = Object.assign({}, bidRequests[0], { userIdAsEids: [tdidEid] });
+      const bidRequest = spec.buildRequests([request])[0];
+      expect(bidRequest.data.tdid).to.eq('tradedesk-id');
     });
     it('should not add a tdid parameter if unified id is not found', function () {
       const request = spec.buildRequests(bidRequests)[0];
@@ -723,7 +883,8 @@ describe('gumgumAdapter', function () {
     });
     it('should send IDL envelope ID if available', function () {
       const idl_env = 'abc123';
-      const request = { ...bidRequests[0], userId: { idl_env } };
+      const idlEid = { source: 'liveramp.com', uids: [{ id: idl_env }] };
+      const request = { ...bidRequests[0], userIdAsEids: [idlEid] };
       const bidRequest = spec.buildRequests([request])[0];
 
       expect(bidRequest.data).to.have.property('idl_env');
@@ -737,7 +898,8 @@ describe('gumgumAdapter', function () {
     });
     it('should add a uid2 parameter if request contains uid2 id', function () {
       const uid2 = { id: 'sample-uid2' };
-      const request = { ...bidRequests[0], userId: { uid2 } };
+      const uid2Eid = { source: 'uidapi.com', uids: [{ id: uid2.id }] };
+      const request = { ...bidRequests[0], userIdAsEids: [uid2Eid] };
       const bidRequest = spec.buildRequests([request])[0];
 
       expect(bidRequest.data).to.have.property('uid2');
@@ -992,7 +1154,7 @@ describe('gumgumAdapter', function () {
     });
 
     it('handles nobid responses', function () {
-      let response = {
+      const response = {
         'ad': {},
         'pag': {
           't': 'ggumtest',
@@ -1002,13 +1164,13 @@ describe('gumgumAdapter', function () {
         },
         'thms': 10000
       }
-      let result = spec.interpretResponse({ body: response }, bidRequest);
+      const result = spec.interpretResponse({ body: response }, bidRequest);
       expect(result.length).to.equal(0);
     });
 
     it('handles empty response', function () {
       let body;
-      let result = spec.interpretResponse({ body }, bidRequest);
+      const result = spec.interpretResponse({ body }, bidRequest);
       expect(result.length).to.equal(0);
     });
 
@@ -1021,7 +1183,7 @@ describe('gumgumAdapter', function () {
       });
 
       it('returns 1x1 when eligible product and size are available', function () {
-        let bidRequest = {
+        const bidRequest = {
           id: 12346,
           sizes: [[300, 250], [1, 1]],
           url: ENDPOINT,
@@ -1031,7 +1193,7 @@ describe('gumgumAdapter', function () {
             t: 'ggumtest'
           }
         }
-        let serverResponse = {
+        const serverResponse = {
           'ad': {
             'id': 2065333,
             'height': 90,
@@ -1050,7 +1212,7 @@ describe('gumgumAdapter', function () {
           },
           'thms': 10000
         }
-        let result = spec.interpretResponse({ body: serverResponse }, bidRequest);
+        const result = spec.interpretResponse({ body: serverResponse }, bidRequest);
         expect(result[0].width).to.equal('1');
         expect(result[0].height).to.equal('1');
       });
@@ -1140,7 +1302,7 @@ describe('gumgumAdapter', function () {
         ]
       }
     }
-    let result = spec.getUserSyncs(syncOptions, [{ body: response }]);
+    const result = spec.getUserSyncs(syncOptions, [{ body: response }]);
     expect(result[0].type).to.equal('image')
     expect(result[1].type).to.equal('iframe')
   })

@@ -1,7 +1,7 @@
 import {deepSetValue, deepAccess, triggerPixel, deepClone, isEmpty, logError, shuffle} from '../src/utils.js';
 import {registerBidder} from '../src/adapters/bidderFactory.js';
 import {ortbConverter} from '../libraries/ortbConverter/converter.js'
-import {BANNER} from '../src/mediaTypes.js';
+import {BANNER, NATIVE, VIDEO} from '../src/mediaTypes.js';
 import {pbsExtensions} from '../libraries/pbsExtensions/pbsExtensions.js'
 const BIDDER_CODE = 'teal';
 const GVLID = 1378;
@@ -31,7 +31,7 @@ const converter = ortbConverter({
   overrides: {
     bidResponse: {
       bidderCode(orig, bidResponse, bid, { bidRequest }) {
-        let useSourceBidderCode = deepAccess(bidRequest, 'params.useSourceBidderCode', false);
+        const useSourceBidderCode = deepAccess(bidRequest, 'params.useSourceBidderCode', false);
         if (useSourceBidderCode) {
           orig.apply(this, [...arguments].slice(1));
         }
@@ -43,7 +43,7 @@ const converter = ortbConverter({
 export const spec = {
   code: BIDDER_CODE,
   gvlid: GVLID,
-  supportedMediaTypes: [BANNER],
+  supportedMediaTypes: [BANNER, NATIVE, VIDEO],
   aliases: [],
 
   isBidRequestValid: function(bid) {
@@ -133,8 +133,8 @@ export const spec = {
 
   onBidderError: function({ error, bidderRequest }) {
     if (error.responseText && error.status) {
-      let id = error.responseText.match(/found for id: (.*)/);
-      if (Array.isArray(id) && id.length > 1 && error.status == 400) {
+      const id = error.responseText.match(/found for id: (.*)/);
+      if (Array.isArray(id) && id.length > 1 && error.status === 400) {
         logError(`Placement: ${id[1]} not found on ${BIDDER_CODE} server. Please contact your account manager or email prebid@teal.works`, error);
         return;
       }

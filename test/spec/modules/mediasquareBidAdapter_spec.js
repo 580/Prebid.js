@@ -135,7 +135,7 @@ describe('MediaSquare bid adapter tests', function () {
       "uids": [{
         "id": "12345678",
         "atype": 1
-       }]
+      }]
     }],
     gdprConsent: {
       gdprApplies: true,
@@ -250,7 +250,7 @@ describe('MediaSquare bid adapter tests', function () {
     const won = spec.onBidWon(response[0]);
     expect(won).to.equal(true);
     expect(server.requests.length).to.equal(1);
-    let message = JSON.parse(server.requests[0].requestBody);
+    const message = JSON.parse(server.requests[0].requestBody);
     expect(message).to.have.property('increment').exist;
     expect(message).to.have.property('increment').and.to.equal('1');
     expect(message).to.have.property('ova').and.to.equal('cleared');
@@ -271,9 +271,9 @@ describe('MediaSquare bid adapter tests', function () {
     expect(syncs).to.have.lengthOf(0);
   });
   it('Verifies user sync with no bid body response', function() {
-    var syncs = spec.getUserSyncs({}, [], DEFAULT_OPTIONS.gdprConsent, DEFAULT_OPTIONS.uspConsent);
+    let syncs = spec.getUserSyncs({}, [], DEFAULT_OPTIONS.gdprConsent, DEFAULT_OPTIONS.uspConsent);
     expect(syncs).to.have.lengthOf(0);
-    var syncs = spec.getUserSyncs({}, [{}], DEFAULT_OPTIONS.gdprConsent, DEFAULT_OPTIONS.uspConsent);
+    syncs = spec.getUserSyncs({}, [{}], DEFAULT_OPTIONS.gdprConsent, DEFAULT_OPTIONS.uspConsent);
     expect(syncs).to.have.lengthOf(0);
   });
   it('Verifies native in bid response', function () {
@@ -295,5 +295,26 @@ describe('MediaSquare bid adapter tests', function () {
     expect(bid).to.have.property('vastUrl');
     expect(bid).to.have.property('renderer');
     delete BID_RESPONSE.body.responses[0].video;
+  });
+  it('Verifies burls in bid response', function () {
+    const request = spec.buildRequests(DEFAULT_PARAMS, DEFAULT_OPTIONS);
+    BID_RESPONSE.body.responses[0].burls = [{'url': 'http://myburl.com/track?bid=1.0'}];
+    const response = spec.interpretResponse(BID_RESPONSE, request);
+    expect(response).to.have.lengthOf(1);
+    const bid = response[0];
+    expect(bid.mediasquare).to.have.property('burls');
+    expect(bid.mediasquare.burls).to.have.lengthOf(1);
+    expect(bid.mediasquare.burls[0]).to.have.property('url').and.to.equal('http://myburl.com/track?bid=1.0');
+    delete BID_RESPONSE.body.responses[0].burls;
+  });
+  it('Verifies burls bidwon', function () {
+    const request = spec.buildRequests(DEFAULT_PARAMS, DEFAULT_OPTIONS);
+    BID_RESPONSE.body.responses[0].burls = [{'url': 'http://myburl.com/track?bid=1.0'}];
+    const response = spec.interpretResponse(BID_RESPONSE, request);
+    const won = spec.onBidWon(response[0]);
+    expect(won).to.equal(true);
+    expect(server.requests.length).to.equal(1);
+    expect(server.requests[0].url).to.equal('http://myburl.com/track?bid=1.0');
+    delete BID_RESPONSE.body.responses[0].burls;
   });
 });

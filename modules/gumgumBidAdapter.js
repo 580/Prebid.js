@@ -2,8 +2,9 @@ import {BANNER, VIDEO} from '../src/mediaTypes.js';
 import {_each, deepAccess, getWinDimensions, logError, logWarn, parseSizesInput} from '../src/utils.js';
 
 import {config} from '../src/config.js';
+import { getConnectionInfo } from '../libraries/connectionInfo/connectionUtils.js';
+import {getDevicePixelRatio} from '../libraries/devicePixelRatio/devicePixelRatio.js';
 import {getStorageManager} from '../src/storageManager.js';
-
 import {registerBidder} from '../src/adapters/bidderFactory.js';
 
 /**
@@ -25,7 +26,7 @@ const TIME_TO_LIVE = 60;
 const DELAY_REQUEST_TIME = 1800000; // setting to 30 mins
 const pubProvidedIdSources = ['dac.co.jp', 'audigent.com', 'id5-sync.com', 'liveramp.com', 'intentiq.com', 'liveintent.com', 'crwdcntrl.net', 'quantcast.com', 'adserver.org', 'yahoo.com']
 
-let invalidRequestIds = {};
+const invalidRequestIds = {};
 let pageViewId = null;
 
 // TODO: potential 0 values for browserParams sent to ad server
@@ -42,8 +43,8 @@ function _getBrowserParams(topWindowUrl, mosttopLocation) {
   let ns;
 
   function getNetworkSpeed () {
-    const connection = window.navigator && (window.navigator.connection || window.navigator.mozConnection || window.navigator.webkitConnection);
-    const Mbps = connection && (connection.downlink || connection.bandwidth);
+    const connection = getConnectionInfo();
+    const Mbps = connection?.downlink ?? connection?.bandwidth;
     return Mbps ? Math.round(Mbps * 1024) : null;
   }
 
@@ -89,7 +90,7 @@ function _getBrowserParams(topWindowUrl, mosttopLocation) {
     pu: stripGGParams(topUrl),
     tpl: mosttopURL,
     ce: storage.cookiesAreEnabled(),
-    dpr: topWindow.devicePixelRatio || 1,
+    dpr: getDevicePixelRatio(topWindow),
     jcsi: JSON.stringify(JCSI),
     ogu: getOgURL()
   };
@@ -122,7 +123,7 @@ function _serializeSupplyChainObj(schainObj) {
   let serializedSchain = `${schainObj.ver},${schainObj.complete}`;
 
   // order of properties: asi,sid,hp,rid,name,domain
-  schainObj.nodes.map(node => {
+  schainObj.nodes.forEach(node => {
     serializedSchain += `!${encodeURIComponent(node['asi'] || '')},`;
     serializedSchain += `${encodeURIComponent(node['sid'] || '')},`;
     serializedSchain += `${encodeURIComponent(node['hp'] || '')},`;
@@ -310,8 +311,8 @@ function getGreatestDimensions(sizes) {
   let maxh = 0;
   let greatestVal = 0;
   sizes.forEach(bannerSize => {
-    let [width, height] = bannerSize;
-    let greaterSide = width > height ? width : height;
+    const [width, height] = bannerSize;
+    const greaterSide = width > height ? width : height;
     if ((greaterSide > greatestVal) || (greaterSide === greatestVal && width >= maxw && height >= maxh)) {
       greatestVal = greaterSide;
       maxw = width;
@@ -322,28 +323,53 @@ function getGreatestDimensions(sizes) {
   return [maxw, maxh];
 }
 
-function getEids(userId) {
-  const idProperties = [
-    'uid',
-    'eid',
-    'lipbid',
-    'envelope',
-    'id'
-  ];
+function getFirstUid(eid) {
+  if (!eid || !Array.isArray(eid.uids)) return null;
+  return eid.uids.find(uid => uid && uid.id);
+}
 
-  return Object.keys(userId).reduce(function (eids, provider) {
-    const eid = userId[provider];
-    switch (typeof eid) {
-      case 'string':
-        eids[provider] = eid;
-        break;
+function getUserEids(bidRequest, bidderRequest) {
+  const bidderRequestEids = deepAccess(bidderRequest, 'ortb2.user.ext.eids');
+  if (Array.isArray(bidderRequestEids) && bidderRequestEids.length) {
+    return bidderRequestEids;
+  }
+  const bidEids = deepAccess(bidRequest, 'userIdAsEids');
+  if (Array.isArray(bidEids) && bidEids.length) {
+    return bidEids;
+  }
+  const bidUserEids = deepAccess(bidRequest, 'user.ext.eids');
+  if (Array.isArray(bidUserEids) && bidUserEids.length) {
+    return bidUserEids;
+  }
+  return [];
+}
 
-      case 'object':
-        const idProp = idProperties.filter(prop => eid.hasOwnProperty(prop));
-        idProp.length && (eids[provider] = eid[idProp[0]]);
-        break;
+function isPubProvidedIdEid(eid) {
+  const source = (eid && eid.source) ? eid.source.toLowerCase() : '';
+  if (!source || !pubProvidedIdSources.includes(source) || !Array.isArray(eid.uids)) return false;
+  return eid.uids.some(uid => uid && uid.ext && uid.ext.stype);
+}
+
+function getEidsFromEidsArray(eids) {
+  return (Array.isArray(eids) ? eids : []).reduce((ids, eid) => {
+    const source = (eid.source || '').toLowerCase();
+    if (source === 'uidapi.com') {
+      const uid = getFirstUid(eid);
+      if (uid) {
+        ids.uid2 = uid.id;
+      }
+    } else if (source === 'liveramp.com') {
+      const uid = getFirstUid(eid);
+      if (uid) {
+        ids.idl_env = uid.id;
+      }
+    } else if (source === 'adserver.org' && Array.isArray(eid.uids)) {
+      const tdidUid = eid.uids.find(uid => uid && uid.id && uid.ext && uid.ext.rtiPartner === 'TDID');
+      if (tdidUid) {
+        ids.tdid = tdidUid.id;
+      }
     }
-    return eids;
+    return ids;
   }, {});
 }
 
@@ -367,14 +393,13 @@ function buildRequests(validBidRequests, bidderRequest) {
       bidId,
       mediaTypes = {},
       params = {},
-      schain,
-      userId = {},
       ortb2Imp,
       adUnitCode = ''
     } = bidRequest;
     const { currency, floor } = _getFloor(mediaTypes, params.bidfloor, bidRequest);
-    const eids = getEids(userId);
-    const gpid = deepAccess(ortb2Imp, 'ext.gpid') || deepAccess(ortb2Imp, 'ext.data.pbadslot');
+    const userEids = getUserEids(bidRequest, bidderRequest);
+    const eids = getEidsFromEidsArray(userEids);
+    const gpid = deepAccess(ortb2Imp, 'ext.gpid');
     const paapiEligible = deepAccess(ortb2Imp, 'ext.ae') === 1
     let sizes = [1, 1];
     let data = {};
@@ -398,16 +423,20 @@ function buildRequests(validBidRequests, bidderRequest) {
       }
     }
     // Send filtered pubProvidedId's
-    if (userId && userId.pubProvidedId) {
-      let filteredData = userId.pubProvidedId.filter(item => pubProvidedIdSources.includes(item.source));
-      let maxLength = 1800; // replace this with your desired maximum length
-      let truncatedJsonString = jsoStringifynWithMaxLength(filteredData, maxLength);
-      data.pubProvidedId = truncatedJsonString
+    if (userEids.length) {
+      const filteredData = userEids.filter(isPubProvidedIdEid);
+      const maxLength = 1800; // replace this with your desired maximum length
+      const truncatedJsonString = jsoStringifynWithMaxLength(filteredData, maxLength);
+      if (filteredData.length) {
+        data.pubProvidedId = truncatedJsonString
+      }
     }
     // ADJS-1286 Read id5 id linktype field
-    if (userId && userId.id5id && userId.id5id.uid && userId.id5id.ext) {
-      data.id5Id = userId.id5id.uid || null
-      data.id5IdLinkType = userId.id5id.ext.linkType || null
+    const id5Eid = userEids.find(eid => (eid.source || '').toLowerCase() === 'id5-sync.com');
+    const id5Uid = getFirstUid(id5Eid);
+    if (id5Uid && id5Uid.ext) {
+      data.id5Id = id5Uid.id || null
+      data.id5IdLinkType = id5Uid.ext.linkType || null
     }
     // ADTS-169 add adUnitCode to requests
     if (adUnitCode) data.aun = adUnitCode;
@@ -490,6 +519,7 @@ function buildRequests(validBidRequests, bidderRequest) {
     if (coppa) {
       data.coppa = coppa;
     }
+    const schain = bidRequest?.ortb2?.source?.ext?.schain;
     if (schain && schain.nodes) {
       data.schain = _serializeSupplyChainObj(schain);
     }
@@ -526,7 +556,7 @@ export function getCids(site) {
   return null;
 }
 export function setIrisId(data, site, params) {
-  let irisID = getCids(site);
+  const irisID = getCids(site);
   if (irisID) {
     data.irisid = irisID;
   } else {
@@ -633,11 +663,11 @@ function interpretResponse(serverResponse, bidRequest) {
       mediaType: type
     }
   } = Object.assign(defaultResponse, serverResponseBody);
-  let data = bidRequest.data || {};
-  let product = data.pi;
-  let mediaType = (product === 6 || product === 7) ? VIDEO : BANNER;
-  let isTestUnit = (product === 3 && data.si === 9);
-  let metaData = {
+  const data = bidRequest.data || {};
+  const product = data.pi;
+  const mediaType = (product === 6 || product === 7) ? VIDEO : BANNER;
+  const isTestUnit = (product === 3 && data.si === 9);
+  const metaData = {
     advertiserDomains: advertiserDomains || [],
     mediaType: type || mediaType
   };
@@ -656,7 +686,7 @@ function interpretResponse(serverResponse, bidRequest) {
     sizes = requestSizesThatMatchResponse.length ? requestSizesThatMatchResponse : parseSizesInput(bidRequest.sizes)
   }
 
-  let [width, height] = sizes[0].split('x');
+  const [width, height] = sizes[0].split('x');
 
   if (jcsi) {
     serverResponseBody.jcsi = JCSI

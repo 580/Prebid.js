@@ -60,7 +60,7 @@ export function videoImpressionVerifier(vastXmlEditor_, bidTracker_) {
     if (bid.mediaType !== 'video') { // YMPB
       return;
     }
-    let { vastXml, vastUrl } = bid;
+    const { vastXml, vastUrl } = bid;
     if (!vastXml && !vastUrl) {
       return;
     }
@@ -153,11 +153,10 @@ export function baseImpressionVerifier(bidTracker_) {
   const bidTracker = bidTracker_;
 
   function trackBid(bid) {
-    let { adId, adUnitCode, requestId, auctionId } = bid;
-    // const trackingId = PB_PREFIX + generateUUID(10 ** 13);
-    // const trackingId = PB_PREFIX + adId; // YMPB use bid adId instead of using generateUUID
-    const trackingId = bid.trackingId || getWrapperAdIdFromBid(bid);
+    const trackingId = bid.trackingId || getWrapperAdIdFromBid(bid) || PB_PREFIX + generateUUID(10 ** 13); // YMPB
     bid.trackingId = trackingId; // YMPB adding trackingId to bid
+    const { adId, adUnitCode, requestId, auctionId } = bid;
+    // const trackingId = PB_PREFIX + generateUUID(10 ** 13);
     bidTracker.store(trackingId, { adId, adUnitCode, requestId, auctionId });
     // console.log(' adding trackBid', adId, trackingId, bidTracker);
     return trackingId;
@@ -197,7 +196,7 @@ export function baseImpressionVerifier(bidTracker_) {
     }
 
     const queryParams = url.searchParams;
-    let uuid = queryParams.get(UUID_MARKER);
+    const uuid = queryParams.get(UUID_MARKER);
     return uuid && bidTracker.remove(uuid);
   }
 
@@ -206,8 +205,9 @@ export function baseImpressionVerifier(bidTracker_) {
       return;
     }
 
-    for (const wrapperId in adWrapperIds) {
-      const bidInfo = bidTracker.remove(adWrapperIds[wrapperId]); // YMPB: fix wrapperId is index, not the value
+    for (const wrapperId of adWrapperIds) {
+      // const bidInfo = bidTracker.remove(wrapperId);
+      const bidInfo = bidTracker.remove(adWrapperIds[wrapperId]) || bidTracker.remove(wrapperId); // YMPB: fix wrapperId is index, not the value
       if (bidInfo) {
         return bidInfo;
       }

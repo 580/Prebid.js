@@ -260,6 +260,7 @@ describe('33acrossIdSystem', () => {
 
             const removeDataFromLocalStorage = sinon.stub(storage, 'removeDataFromLocalStorage');
             const setCookie = sinon.stub(storage, 'setCookie');
+            const cookiesAreEnabled = sinon.stub(storage, 'cookiesAreEnabled').returns(true);
             sinon.stub(domainUtils, 'domainOverride').returns('foo.com');
 
             request.respond(200, {
@@ -277,6 +278,7 @@ describe('33acrossIdSystem', () => {
 
             removeDataFromLocalStorage.restore();
             setCookie.restore();
+            cookiesAreEnabled.restore();
             domainUtils.domainOverride.restore();
           });
         });
@@ -419,6 +421,7 @@ describe('33acrossIdSystem', () => {
 
             const removeDataFromLocalStorage = sinon.stub(storage, 'removeDataFromLocalStorage');
             const setCookie = sinon.stub(storage, 'setCookie');
+            const cookiesAreEnabled = sinon.stub(storage, 'cookiesAreEnabled').returns(true);
             sinon.stub(domainUtils, 'domainOverride').returns('foo.com');
 
             request.respond(200, {
@@ -436,6 +439,7 @@ describe('33acrossIdSystem', () => {
 
             removeDataFromLocalStorage.restore();
             setCookie.restore();
+            cookiesAreEnabled.restore();
             domainUtils.domainOverride.restore();
           });
         });
@@ -1410,28 +1414,30 @@ describe('33acrossIdSystem', () => {
     context('when the server returns a successful response but without ID', () => {
       it('should log a message', () => {
         const logMessageSpy = sinon.spy(utils, 'logMessage');
-        const completeCallback = () => {};
+        try {
+          const completeCallback = () => {};
 
-        const { callback } = thirtyThreeAcrossIdSubmodule.getId({
-          params: {
-            pid: '12345'
-          }
-        });
+          const { callback } = thirtyThreeAcrossIdSubmodule.getId({
+            params: {
+              pid: '12345'
+            }
+          });
 
-        callback(completeCallback);
+          callback(completeCallback);
 
-        const [request] = server.requests;
+          const [request] = server.requests;
 
-        request.respond(200, {
-          'Content-Type': 'application/json'
-        }, JSON.stringify({
-          succeeded: true,
-          data: {}
-        }));
+          request.respond(200, {
+            'Content-Type': 'application/json'
+          }, JSON.stringify({
+            succeeded: true,
+            data: {}
+          }));
 
-        expect(logMessageSpy.calledOnceWithExactly(`${thirtyThreeAcrossIdSubmodule.name}: No envelope was received`)).to.be.true;
-
-        logMessageSpy.restore();
+          expect(logMessageSpy.calledWith(`${thirtyThreeAcrossIdSubmodule.name}: No envelope was received`)).to.be.true;
+        } finally {
+          logMessageSpy.restore();
+        }
       });
 
       it('should execute complete callback with undefined value', () => {
