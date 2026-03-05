@@ -30,6 +30,7 @@ const RENDERER_URL = 'https://pubmatic.bbvms.com/r/'.concat('$RENDERER', '.js');
 const MSG_VIDEO_PLCMT_MISSING = 'Video.plcmt param missing';
 const PREBID_NATIVE_DATA_KEY_VALUES = Object.values(PREBID_NATIVE_DATA_KEYS_TO_ORTB);
 const DEFAULT_TTL = 360;
+const DEFAULT_GZIP_ENABLED = true;
 const CUSTOM_PARAMS = {
   'kadpageurl': '', // Custom page url
   'gender': '', // User gender
@@ -72,6 +73,8 @@ const converter = ortbConverter({
     if (!imp.hasOwnProperty('banner') && !imp.hasOwnProperty('video') && !imp.hasOwnProperty('native')) {
       return null;
     }
+    imp.ext = imp.ext || {};
+    imp.ext.pbcode = adUnitCode;
     if (deals) addPMPDeals(imp, deals);
     if (dctr) addDealCustomTargetings(imp, dctr);
     if (rtd?.jwplayer) addJWPlayerSegmentData(imp, rtd.jwplayer);
@@ -94,7 +97,9 @@ const converter = ortbConverter({
     return imp;
   },
   request(buildRequest, imps, bidderRequest, context) {
-    const request = buildRequest(imps, bidderRequest, context);
+    // Optimize the imps array before building the request
+    const optimizedImps = optimizeImps(imps, bidderRequest);
+    const request = buildRequest(optimizedImps, bidderRequest, context);
     if (blockedIabCategories.length || request.bcat) {
       const validatedBCategories = validateBlockedCategories([...(blockedIabCategories || []), ...(request.bcat || [])]);
       if (validatedBCategories.length) request.bcat = validatedBCategories;
@@ -105,7 +110,7 @@ const converter = ortbConverter({
     }
     reqLevelParams(request);
     updateUserSiteDevice(request, context?.bidRequests);
-    addExtenstionParams(request);
+    addExtenstionParams(request, bidderRequest)
     const marketPlaceEnabled = bidderRequest?.bidderCode
       ? bidderSettings.get(bidderRequest.bidderCode, 'allowAlternateBidderCodes') : undefined;
     if (marketPlaceEnabled) updateRequestExt(request, bidderRequest);
@@ -505,8 +510,8 @@ const updateResponseWithCustomFields = (res, bid, ctx) => {
   }
 }
 
-const addExtenstionParams = (req) => {
-  const { profId, verId, wiid, transactionId } = conf;
+const addExtenstionParams = (req, bidderRequest) => {
+  const { profId, verId, wiid } = conf;
   req.ext = {
     epoch: new Date().getTime(), // Sending epoch timestamp in request.ext object
     wrapper: {
@@ -514,8 +519,8 @@ const addExtenstionParams = (req) => {
       version: verId ? parseInt(verId) : undefined,
       wiid: wiid,
       wv: '$$REPO_AND_VERSION$$',
-      transactionId,
-      wp: 'pbjs'
+      wp: 'pbjs',
+      biddercode: bidderRequest?.bidderCode
     },
     cpmAdjustment: cpmAdjustment
   }
@@ -567,6 +572,46 @@ const getConnectionType = () => {
   let connection = window.navigator && (window.navigator.connection || window.navigator.mozConnection || window.navigator.webkitConnection);
   const types = { ethernet: 1, wifi: 2, 'slow-2g': 4, '2g': 4, '3g': 5, '4g': 6 };
   return types[connection?.effectiveType] || 0;
+}
+
+/**
+ * Optimizes the impressions array by consolidating impressions for the same ad unit and media type
+ * @param {Array} imps - Array of impression objects
+ * @param {Object} bidderRequest - The bidder request object
+ * @returns {Array} - Optimized impressions array
+ */
+function optimizeImps(imps, bidderRequest) {
+  const optimizedImps = {};
+
+  bidderRequest.bids.forEach(bid => {
+    const correspondingImp = imps.find(imp => imp.id === bid.bidId);
+    if (!correspondingImp) return;
+    const uniqueKey = bid.adUnitId;
+    if (!optimizedImps[uniqueKey]) {
+      optimizedImps[uniqueKey] = deepClone(correspondingImp);
+      return;
+    }
+    const baseImp = optimizedImps[uniqueKey];
+
+    if (isStr(correspondingImp.tagid)) {
+      baseImp.tagid = correspondingImp.tagid;
+    }
+
+    const copyPropertytoPath = (propPath, propName, toMerge) => {
+      if (!correspondingImp[propPath] || !correspondingImp[propPath][propName]) return;
+      if (!baseImp[propPath]) baseImp[propPath] = {};
+      if (toMerge) {
+        if (!baseImp[propPath][propName]) baseImp[propPath][propName] = [];
+        baseImp[propPath][propName] = [...baseImp[propPath][propName], ...correspondingImp[propPath][propName]];
+      } else {
+        baseImp[propPath][propName] = correspondingImp[propPath][propName];
+      }
+    };
+    copyPropertytoPath('ext', 'key_val', false);
+    copyPropertytoPath('ext', 'pmZoneId', false);
+    copyPropertytoPath('pmp', 'deals', true);
+  });
+  return Object.values(optimizedImps);
 }
 
 // BB stands for Blue BillyWig
@@ -640,6 +685,25 @@ const getPublisherId = (bids) =>
   Array.isArray(bids) && bids.length > 0
     ? bids.find(bid => bid.params?.publisherId?.trim())?.params.publisherId || null
     : null;
+
+function getGzipSetting() {
+  // Check bidder-specific configuration
+  try {
+    const gzipSetting = deepAccess(config.getBidderConfig(), 'pubmatic.gzipEnabled');
+    if (gzipSetting !== undefined) {
+      const gzipValue = String(gzipSetting).toLowerCase().trim();
+      if (gzipValue === 'true' || gzipValue === 'false') {
+        const parsedValue = gzipValue === 'true';
+        logInfo('PubMatic: Using bidder-specific gzipEnabled setting:', parsedValue);
+        return parsedValue;
+      }
+      logWarn('PubMatic: Invalid gzipEnabled value in bidder config:', gzipSetting);
+    }
+  } catch (e) { logWarn('PubMatic: Error accessing bidder config:', e); }
+
+  logInfo('PubMatic: Using default gzipEnabled setting:', DEFAULT_GZIP_ENABLED);
+  return DEFAULT_GZIP_ENABLED;
+}
 
 const _handleCustomParams = (params, conf) => {
   Object.keys(CUSTOM_PARAMS).forEach(key => {
@@ -768,7 +832,6 @@ export const spec = {
       originalBid.params.wiid = originalBid.params.wiid || bidderRequest.auctionId || wiid;
       bid = deepClone(originalBid);
       _handleCustomParams(bid.params, conf);
-      conf.transactionId = bid.ortb2Imp?.ext?.tid;
       const { bcat, acat } = bid.params;
       if (bcat) {
         blockedIabCategories = blockedIabCategories.concat(bcat);
@@ -785,7 +848,7 @@ export const spec = {
       data: data,
       bidderRequest: bidderRequest,
       options: {
-        endpointCompression: true
+        endpointCompression: getGzipSetting()
       },
     };
     return data?.imp?.length ? serverRequest : null;
