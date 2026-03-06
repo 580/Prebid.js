@@ -24,7 +24,7 @@ import {
   sortByHighestCpm
 } from '../src/utils.js';
 import {DEFAULT_DFP_PARAMS, DFP_ENDPOINT, gdprParams} from '../libraries/dfpUtils/dfpUtils.js';
-import { vastLocalCache } from '../src/videoCache.js';
+import { storeLocally, vastLocalCache } from '../src/videoCache.js'; // YMPB v10
 import { fetch } from '../src/ajax.js';
 import XMLUtil from '../libraries/xmlUtils/xmlUtils.js';
 /**
@@ -258,7 +258,6 @@ function getCustParams(bid, options, urlCustParams) {
 
       let allTargeting = targeting.getAllTargeting(adUnit.code, undefined, bids);
       allTargetingData = (allTargeting) ? allTargeting[adUnit.code] : {};
-      debugger;
     }
   }
 
@@ -329,6 +328,13 @@ export async function getVastXml(options, localCacheMap = vastLocalCache) {
   const gamVastWrapper = await response.text();
 
   if (config.getConfig('cache.useLocal')) {
+    // YMPB v10 create cache agagin if not found
+    if (options.bid) {
+      const uuid = options.bid.videoCacheKey;
+      if (!localCacheMap.has(uuid)) {
+        storeLocally(options.bid);
+      }
+    }
     const vastXml = await getVastForLocallyCachedBids(gamVastWrapper, localCacheMap);
     return vastXml;
   }

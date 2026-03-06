@@ -85,7 +85,7 @@ export const TARGETING_KEYS = {
   UUID: 'hb_uuid',
   CACHE_ID: 'hb_cache_id',
   CACHE_HOST: 'hb_cache_host',
-  CACHE_PATH: 'hb_cache_path', // YMPB adding path key for video bid
+  CACHE_SERVER: 'cache_server', // YMPB v10 adding cache_server key for video bid
   YM_ALIAS: 'yalias', // YMPB support legacy bidder alias
   ADOMAIN: 'hb_adomain',
   ACAT: 'hb_acat',
@@ -101,8 +101,8 @@ export const DEFAULT_TARGETING_KEYS = {
   DEAL: 'hb_deal',
   FORMAT: 'hb_format',
   UUID: 'hb_uuid',
-  CACHE_HOST: 'hb_cache_host',
-  CACHE_PATH: 'hb_cache_path', // YMPB adding path key for video bid
+  // CACHE_HOST: 'hb_cache_host', // YMPB v10 remove hb_cache_host
+  CACHE_SERVER: 'cache_server', // YMPB v10 adding cache_server key for video bid
   YM_ALIAS: 'yalias', // YMPB support legacy bidder alias
 };
 

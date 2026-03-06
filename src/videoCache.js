@@ -234,7 +234,7 @@ export const storeLocally = (bid) => {
   const vastXml = getVastXml(bid);
   const bidVastUrl = URL.createObjectURL(new Blob([vastXml], { type: 'text/xml' }));
 
-  assignVastUrlAndCacheId(bid, bidVastUrl);
+  assignVastUrlAndCacheId(bid, bidVastUrl, bid.videoCacheKey); // YMPB v10 add videoCacheKey
 
   vastLocalCache.set(bid.videoCacheKey, bidVastUrl);
 };
