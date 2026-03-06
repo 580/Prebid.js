@@ -217,6 +217,11 @@ export function YollavideoProvider(
     player.requestAds(adTagUrl);
   }
 
+  // YMPB v10
+  function setAdXml(vastXml, options) {
+    player.requestAds(vastXml);
+  }
+
   function onEvent(type, callback, payload) {
     registerSetupListeners(type, callback, payload);
 
@@ -268,11 +273,11 @@ export function YollavideoProvider(
         break;
 
       case AD_REQUEST:
-        getEventPayload = e => {
-          const adTagUrl = e.detail.adsRequest.adTagUrl;
-          adState.updateState({ adTagUrl });
-          return { adTagUrl };
-        };
+        // getEventPayload = e => {
+        //   const adTagUrl = e.detail.adsRequest.adTagUrl;
+        //   adState.updateState({ adTagUrl });
+        //   return { adTagUrl };
+        // };
         break
 
       case AD_LOADED:
@@ -465,6 +470,7 @@ export function YollavideoProvider(
     getOrtbVideo: getOrtbVideo,
     getOrtbContent: getOrtbContent,
     setAdTagUrl: setAdTagUrl,
+    setAdXml: setAdXml, // YMPB v10
     onEvent: onEvent,
     offEvent: offEvent,
     destroy: destroy,

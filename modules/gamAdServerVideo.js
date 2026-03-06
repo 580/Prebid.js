@@ -23,7 +23,7 @@ import {
   parseUrl
 } from '../src/utils.js';
 import {DEFAULT_GAM_PARAMS, GAM_ENDPOINT, gdprParams} from '../libraries/gamUtils/gamUtils.js';
-import { vastLocalCache } from '../src/videoCache.js';
+import { storeLocally, vastLocalCache } from '../src/videoCache.js'; // YMPB v10 add storeLocally
 import { fetch } from '../src/ajax.js';
 import XMLUtil from '../libraries/xmlUtils/xmlUtils.js';
 
@@ -302,6 +302,14 @@ export async function getVastXml(options, localCacheMap = vastLocalCache) {
   const gpp = gppDataHandler.getConsentData?.();
   // Adding parameters required by ima
   if (config.getConfig('cache.useLocal') && window.google?.ima) {
+    // YMPB v10 create cache agagin if not found
+    if (options.bid) {
+      const uuid = options.bid.videoCacheKey;
+      if (!localCacheMap.has(uuid)) {
+        storeLocally(options.bid);
+      }
+    }
+
     vastUrl = new URL(vastUrl);
     const imaSdkVersion = `h.${window.google.ima.VERSION}`;
     vastUrl.searchParams.set('omid_p', `Google1/${imaSdkVersion}`);
