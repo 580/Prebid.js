@@ -723,7 +723,7 @@ export type RequestBidsOptions = {
   ortb2?: DeepPartial<ORTBRequest>;
 }
 
-type RequestBidsResult = {
+export type RequestBidsResult = { // YMPB: add exprt
   /**
    * Bids received, grouped by ad unit.
    */
