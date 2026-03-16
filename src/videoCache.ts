@@ -15,6 +15,7 @@ import {auctionManager} from './auctionManager.js';
 import {generateUUID, logError, logWarn} from './utils.js';
 import {addBidToAuction} from './auction.js';
 import type {VideoBid} from "./bidfactory.ts";
+import {getCacheServerCode} from './ympb.js';
 
 // YMPB: adding UUID_MARKER
 const PB_PREFIX = 'pb_';
@@ -295,14 +296,32 @@ export const _internal = {
 }
 
 export function storeBatch(batch) {
+  // YMPB: add tracker
+  const startTime = Date.now();
   const bids = batch.map(entry => entry.bidResponse)
   function err(msg) {
     logError(`Failed to save to the video cache: ${msg}. Video bids will be discarded:`, bids)
   }
   _internal.store(bids, function (error, cacheIds) {
+    const endTime = Date.now();
+    const costTime = endTime - startTime;
+    const params: any = {
+      eventCatogory: 'Debug',
+      eventAction: 'onCacheServerResponse',
+      eventLabel: getCacheServerCode(),
+      cm1: bids.length,
+      cm2: cacheIds.length,
+      cm6: 0,
+      cm7: costTime,
+    };
+
     if (error) {
+      params.cd6 = error || 'error';
+      params.cm6 = bids.length || 1;
       err(error)
     } else if (batch.length !== cacheIds.length) {
+      params.cd6 = 'cache IDs mismatched';
+      params.cm6 = bids.length || 1;
       logError(`expected ${batch.length} cache IDs, got ${cacheIds.length} instead`)
     } else {
       cacheIds.forEach((cacheId, i) => {
@@ -315,6 +334,11 @@ export function storeBatch(batch) {
           afterBidAdded();
         }
       });
+    }
+
+    // YMPB: send event to yaq
+    if (typeof window.yaq !== 'undefined') {
+      window.yaq('event.debug', 'onCacheServerResponse', params);
     }
   });
 };

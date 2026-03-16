@@ -36,8 +36,26 @@ export function checkBidderTimeout(adUnitCode, bid) {
       return window.YMPB.checkBidderTimeout(au.code, bid);
     }
   } catch (error) {
-    
+    //
   }
 
   return false;
+}
+
+export function getCacheServerCode() {
+  const url = pbjsInstance.getConfig('cache.url') || "";
+
+  if (url.indexOf('yolla') > -1) {
+    return 'yolla';
+  }
+
+  if (url.indexOf('rubicon') > -1) {
+    return 'rubicon';
+  }
+
+  if (url.indexOf('adnxs') > -1) {
+    return 'adnxs';
+  }
+
+  return 'unknown';
 }
