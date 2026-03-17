@@ -1,4 +1,4 @@
-import {getDNT} from '../libraries/dnt/index.js';
+import { getDNT } from '../libraries/dnt/index.js';
 import { generateUUID, deepSetValue, deepAccess, isArray, isFn, isPlainObject, logError, logWarn } from '../src/utils.js';
 import { registerBidder } from '../src/adapters/bidderFactory.js';
 import { BANNER, VIDEO } from '../src/mediaTypes.js';
@@ -96,6 +96,16 @@ export const spec = {
     // coppa compliance
     if (bidderRequest?.ortb2?.regs?.coppa) {
       deepSetValue(openRtbBidRequest, 'regs.coppa', 1);
+    }
+
+    // ortb2 blocking: bcat, badv (with optional params fallback)
+    const bcat = bidderRequest?.ortb2?.bcat || deepAccess(validBidRequests, '0.params.bcat');
+    const badv = bidderRequest?.ortb2?.badv || deepAccess(validBidRequests, '0.params.badv');
+    if (isArray(bcat) && bcat.length > 0) {
+      openRtbBidRequest.bcat = bcat;
+    }
+    if (isArray(badv) && badv.length > 0) {
+      openRtbBidRequest.badv = badv;
     }
 
     injectEids(openRtbBidRequest, validBidRequests);
