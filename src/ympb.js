@@ -33,10 +33,10 @@ export function getSlotAreaSize(adUnitCode) {
 export function checkBidderTimeout(adUnitCode, bid) {
   try {
     if (window.YMPB && window.YMPB.checkBidderTimeout) {
-      return window.YMPB.checkBidderTimeout(au.code, bid);
+      return window.YMPB.checkBidderTimeout(adUnitCode, bid);
     }
   } catch (error) {
-    //
+    debugger
   }
 
   return false;
