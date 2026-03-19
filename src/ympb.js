@@ -36,7 +36,7 @@ export function checkBidderTimeout(adUnitCode, bid) {
       return window.YMPB.checkBidderTimeout(adUnitCode, bid);
     }
   } catch (error) {
-    debugger
+    // debugger
   }
 
   return false;
