@@ -13,7 +13,9 @@ export const getCreativeRendererSource = hook('sync', function (bidResponse) {
 
 export const getCreativeRenderer = (function() {
   const renderers = {};
+  // debugger;
   return function (bidResponse) {
+    debugger;
     const src = getCreativeRendererSource(bidResponse);
     if (!renderers.hasOwnProperty(src)) {
       renderers[src] = new PbPromise((resolve) => {
@@ -36,6 +38,7 @@ export const getCreativeRenderer = (function() {
         document.body.appendChild(iframe);
       })
     }
+    debugger;
     return renderers[src];
   }
 })();
