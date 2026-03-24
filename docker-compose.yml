@@ -1,0 +1,15 @@
+# version: '3' 
+services:
+  npm:
+    image: node:25-bullseye
+    # build:
+    #   context: ./dockerfile/npm/
+    #   dockerfile: npm.dockerfile
+    container_name: npm
+    volumes:
+      - ./:/var/www/html
+    ports:
+      - 3000:3000
+      - 3001:3001
+    working_dir: /var/www/html
+    entrypoint: ['npm']
