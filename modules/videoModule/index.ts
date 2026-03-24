@@ -348,6 +348,7 @@ export function PbVideo(videoCore_, getConfig_, pbGlobal_, requestBids_, pbEvent
 
 declare module '../../src/prebidGlobal' {
   interface PrebidJS {
+    updateFloorPrice: any // YMPB,
     videoModule: ReturnType<typeof PbVideo>
   }
 }

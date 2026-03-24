@@ -5,6 +5,7 @@ declare global {
   function parseFloat(n: number): number;
 
   interface Window {
+    yaq: any // YMPB,
     apntag: any;
   }
 }
