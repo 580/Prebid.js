@@ -241,10 +241,15 @@ export const storeLocally = (bid) => {
 };
 
 const assignVastUrlAndCacheId = (bid, vastUrl, videoCacheKey) => {
-  bid.videoCacheKey = videoCacheKey || generateUUID();
-  if (!bid.vastUrl) {
-    bid.vastUrl = vastUrl;
+  // YMPB: no need to override videoCacheKey
+  if (bid.vastUrl && bid.videoCacheKey) {
+    return;
   }
+
+  bid.videoCacheKey = videoCacheKey || generateUUID();
+  bid.vastUrl = vastUrl;
+  // if (!bid.vastUrl) {
+  // }
 }
 
 export const _internal = {
