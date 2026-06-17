@@ -1,10 +1,10 @@
 # version: '3' 
 services:
   npm:
-    image: node:25-bullseye
-    # build:
-    #   context: ./dockerfile/npm/
-    #   dockerfile: npm.dockerfile
+    # image: node:25-bullseye
+    build:
+      context: ./dockerfile/npm/
+      dockerfile: npm.dockerfile
     container_name: npm
     volumes:
       - ./:/var/www/html
