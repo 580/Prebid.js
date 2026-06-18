@@ -1,3 +1,4 @@
 src/**/*
 !src/buildOptions.mjs
 !src/creative-renderers
+!src/creative-renderers/*.js
