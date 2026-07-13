@@ -1,0 +1,104 @@
+<!--
+  Manual test for the cross-domain postMessage render path (NOT pbjs.renderAd / friendly
+  iframe), with the ymCreative.html mute guard.
+
+  How to run:
+    1. gulp build-bundle-dev     (-> build/dev/prebid.js)
+       gulp build-creative-dev   (-> build/creative/creative.js)
+    2. gulp serve                (or: gulp review-start)
+    3. Open http://localhost:9999/integrationExamples/gpt/x-domain/ympb-sandbox-test.html
+
+  It runs one AppNexus test bid and renders it into a
+  sandbox="allow-scripts allow-same-origin" iframe pointed at ./ymCreative.html. Expect
+  AD_RENDER_SUCCEEDED and the creative visible.
+
+  ISOLATION CAVEAT: here the creative is served from the SAME origin as this page (both
+  localhost), so this validates the RENDER MECHANISM only, not page isolation. In production
+  the creative must be served from a different domain than the publisher page (your CDN);
+  that cross-origin load is what isolates it. Do NOT strip allow-same-origin to "add"
+  isolation — it throws a null-origin SecurityError inside the bootstrap.
+
+  MUTE CHECK: the AppNexus test placement is a banner, so there is no audio to hear. To
+  exercise the mute guard, render a bid whose creative contains a <video autoplay> with an
+  audio track and confirm it plays silently (any <video> in the frame ends up muted, and its
+  `muted` property is a read-only true).
+-->
+<html>
+<head>
+  <script async src="../../../build/dev/prebid.js"></script>
+  <script>
+    var PREBID_TIMEOUT = 1500;
+
+    var adUnits = [{
+      code: 'test-slot',
+      mediaTypes: { banner: { sizes: [[300, 250]] } },
+      bids: [{ bidder: 'appnexus', params: { placementId: 13144370 } }]
+    }];
+
+    var pbjs = pbjs || {};
+    pbjs.que = pbjs.que || [];
+
+    // Inlined copy of renderAdInSandbox() from ympb-sandbox-render.js (kept in sync).
+    function renderAdInSandbox(opts) {
+      var iframe = document.createElement('iframe');
+      iframe.sandbox = 'allow-scripts allow-same-origin';
+      iframe.setAttribute('scrolling', 'no');
+      iframe.setAttribute('frameborder', '0');
+      iframe.style.border = '0';
+      iframe.style.display = 'block';
+      if (opts.width != null) iframe.width = String(opts.width);
+      if (opts.height != null) iframe.height = String(opts.height);
+      var url = new URL(opts.creativeUrl, window.location.href);
+      url.searchParams.set('adId', opts.adId);
+      url.searchParams.set('pubUrl', window.location.href);
+      iframe.src = url.toString();
+      opts.container.appendChild(iframe);
+      return iframe;
+    }
+
+    function log(msg, ok) {
+      var el = document.getElementById('status');
+      var line = document.createElement('div');
+      line.textContent = msg;
+      if (ok === true) line.style.color = 'green';
+      if (ok === false) line.style.color = 'red';
+      el.appendChild(line);
+    }
+
+    pbjs.que.push(function () {
+      pbjs.onEvent('adRenderSucceeded', function (e) {
+        log('AD_RENDER_SUCCEEDED for adId ' + (e.adId || (e.bid && e.bid.adId)), true);
+      });
+      pbjs.onEvent('adRenderFailed', function (e) {
+        log('AD_RENDER_FAILED: ' + e.reason + ' — ' + e.message, false);
+      });
+
+      pbjs.addAdUnits(adUnits);
+      pbjs.requestBids({
+        timeout: PREBID_TIMEOUT,
+        bidsBackHandler: function () {
+          var bids = pbjs.getHighestCpmBids('test-slot');
+          if (!bids.length) { log('No bids returned (check network / test placement).', false); return; }
+          var bid = bids[0];
+          log('Winning bid adId=' + bid.adId + ' cpm=' + bid.cpm + ' size=' + bid.width + 'x' + bid.height);
+
+          var iframe = renderAdInSandbox({
+            adId: bid.adId,
+            container: document.getElementById('test-slot'),
+            creativeUrl: './ymCreative.html',
+            width: bid.width,
+            height: bid.height
+          });
+          log('iframe sandbox = "' + iframe.getAttribute('sandbox') + '"');
+          log('In production, serve ymCreative.html from a domain different than the page for isolation.');
+        }
+      });
+    });
+  </script>
+</head>
+<body>
+  <h2>YMPB cross-domain render test (muted)</h2>
+  <div id="status" style="font-family:monospace;white-space:pre;margin-bottom:16px;"></div>
+  <div id="test-slot" style="border:1px dashed #ccc;display:inline-block;min-width:300px;min-height:250px;"></div>
+</body>
+</html>

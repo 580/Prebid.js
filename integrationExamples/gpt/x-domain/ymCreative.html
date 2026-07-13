@@ -1,0 +1,137 @@
+<!--
+  YMPB cross-domain creative for rendering Prebid bids in an iframe isolated from the
+  publisher page (SafeFrame-style), WITH audio hard-disabled (muted autoplay allowed,
+  never with sound).
+
+  Host this file on your CDN — a domain DIFFERENT from the publisher page. That cross-origin
+  load is what isolates the creative from the page. Point an iframe at it:
+
+      <iframe sandbox="allow-scripts allow-same-origin"
+              src="https://your.cdn/ymCreative.html?adId=<ADID>&pubUrl=<TOP_PAGE_URL>">
+
+  NOTE: `allow-same-origin` is REQUIRED. The bootstrap creates a nested renderer frame and
+  reaches into it, which needs same-origin between this frame and its children. An
+  `allow-scripts`-only sandbox forces distinct opaque origins and throws
+  "Blocked a frame with origin 'null' from accessing a cross-origin frame". On a cross-origin
+  CDN load, `allow-same-origin` keeps the real CDN origin — still cross-origin to (isolated
+  from) the publisher page. Never host this on the publisher's own domain.
+
+  `adId` and `pubUrl` come from the query string (a cross-origin frame cannot read
+  window.top.location). `pubUrl` MUST be the URL of the page where Prebid.js runs — it is the
+  postMessage targetOrigin back to Prebid; wrong/missing → silent blank.
+
+  The three scripts below run in order:
+    1. MUTE GUARD — installs a muted/volume lock on media elements AND a Web Audio silence
+       guard on this realm and, via a MutationObserver, on every same-origin child frame the
+       renderer creates (the ad renders into a nested srcdoc iframe). Must be first so it is
+       active before the ad frame appears.
+    2. BOOTSTRAP — compiled cross-domain renderer (window.pbRender). Byte-identical to
+       build/creative/creative.js. Regenerate with `gulp build-creative-prod`.
+    3. INVOKE — reads adId/pubUrl and calls pbRender.
+-->
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body>
+
+<!-- 1. MUTE GUARD -->
+<script>
+  (function () {
+    function muteMediaIn(root) {
+      try {
+        var m = root.querySelectorAll ? root.querySelectorAll('video,audio') : [];
+        for (var i = 0; i < m.length; i++) { try { m[i].muted = true; m[i].volume = 0; } catch (e) {} }
+      } catch (e) {}
+    }
+    // Best-effort: silence Web Audio in a realm by routing any connection to the context
+    // destination through a zero-gain node. Covers audio not tied to a muted media element.
+    // Patching AudioNode.prototype.connect covers both AudioContext and webkitAudioContext.
+    function muteWebAudio(win) {
+      try {
+        if (win.__ymAudioMuted) return;
+        var AN = win.AudioNode;
+        if (!AN || !AN.prototype || !AN.prototype.connect) return;
+        win.__ymAudioMuted = true;
+        var origConnect = AN.prototype.connect;
+        AN.prototype.connect = function (dest) {
+          try {
+            if (dest && this.context && dest === this.context.destination) {
+              var g = this.context.createGain();
+              g.gain.value = 0;
+              origConnect.call(this, g);        // node -> zero gain
+              return origConnect.call(g, dest);  // zero gain -> destination
+            }
+          } catch (e) { /* fall through to native connect */ }
+          return origConnect.apply(this, arguments);
+        };
+      } catch (e) {}
+    }
+    // Lock muted=true / volume=0 for all media in a realm, silence Web Audio, plus mute
+    // anything already there.
+    function lockRealm(win) {
+      try {
+        var proto = win.HTMLMediaElement && win.HTMLMediaElement.prototype;
+        if (proto && !proto.__ymMuted) {
+          proto.__ymMuted = true;
+          Object.defineProperty(proto, 'muted', { configurable: true, get: function () { return true; }, set: function () {} });
+          Object.defineProperty(proto, 'volume', { configurable: true, get: function () { return 0; }, set: function () {} });
+        }
+        muteWebAudio(win);
+        muteMediaIn(win.document);
+      } catch (e) { /* cross-origin child (e.g. adUrl on another origin) — cannot lock; the
+                       browser already limits it to muted autoplay since we add no allow="autoplay" */ }
+    }
+    function attachFrame(frame) {
+      var apply = function () {
+        try { var cw = frame.contentWindow; if (cw) { lockRealm(cw); observe(cw); } } catch (e) {}
+      };
+      apply();                                   // patch the initial (about:blank) realm now
+      if (frame.addEventListener) frame.addEventListener('load', apply); // and after srcdoc/src loads
+    }
+    function observe(win) {
+      try {
+        var mo = new win.MutationObserver(function (muts) {
+          for (var i = 0; i < muts.length; i++) {
+            var nodes = muts[i].addedNodes;
+            for (var j = 0; j < nodes.length; j++) {
+              var n = nodes[j];
+              if (!n || n.nodeType !== 1) continue;
+              if (n.tagName === 'VIDEO' || n.tagName === 'AUDIO') { try { n.muted = true; n.volume = 0; } catch (e) {} }
+              else if (n.tagName === 'IFRAME') { attachFrame(n); }
+              else {
+                muteMediaIn(n);
+                var frames = n.querySelectorAll ? n.querySelectorAll('iframe') : [];
+                for (var k = 0; k < frames.length; k++) attachFrame(frames[k]);
+              }
+            }
+          }
+        });
+        mo.observe(win.document.documentElement || win.document, { childList: true, subtree: true });
+      } catch (e) {}
+    }
+    lockRealm(window);
+    observe(window);
+  })();
+</script>
+
+<!-- 2. BOOTSTRAP (compiled cross-domain renderer; keep in sync with the paired Prebid build) -->
+<script>(()=>{"use strict";const e="Prebid Event",n=(()=>{const e={frameBorder:0,scrolling:"no",marginHeight:0,marginWidth:0,topMargin:0,leftMargin:0,allowTransparency:"true"};return(n,t)=>{const r=n.createElement("iframe");return Object.entries(Object.assign({},t,e)).forEach((([e,n])=>r.setAttribute(e,n))),r}})();function t(e){return!!e.frames.__pb_locator__}window.pbRender=function(r){let o=r.parent;try{for(;o!==r.top&&!t(o);)o=o.parent;t(o)||(o=r.parent)}catch(e){}return function({adId:t,pubUrl:s,clickUrl:i}){const a=new URL(s,window.location).origin;function c(e,n,r){const s=new MessageChannel;s.port1.onmessage=l(r),o.postMessage(JSON.stringify(Object.assign({message:e,adId:t},n)),a,[s.port2])}function d(n){c(e,{event:"adRenderFailed",info:{reason:n?.reason||"exception",message:n?.message}}),n?.stack&&console.error(n)}function l(e){return function(){try{return e.apply(this,arguments)}catch(e){d(e)}}}c("Prebid Request",{options:{clickUrl:i}},(function(o){let s;try{s=JSON.parse(o.data)}catch(e){return}if("Prebid Response"===s.message&&s.adId===t){const t=n(r.document,{width:0,height:0,style:"display: none"});t.onload=l((function(){const o=t.contentWindow;o.Promise.resolve(o.render(s,{sendMessage:c,mkFrame:n},r)).then((()=>c(e,{event:"adRenderSucceeded"})),d)})),t.srcdoc=`<script>${s.renderer}<\/script>`,r.document.body.appendChild(t)}}))}}(window)})();</script>
+
+<!-- 3. INVOKE -->
+<script>
+  (function () {
+    var q = new URLSearchParams(window.location.search);
+    var adId = q.get('adId');
+    var pubUrl = q.get('pubUrl');
+    var clickUrl = q.get('clickUrl') || undefined;
+
+    if (!adId || !pubUrl) {
+      // eslint-disable-next-line no-console
+      console.error('[ymCreative] missing required query param: ' + (!adId ? 'adId' : 'pubUrl'));
+      return;
+    }
+    window.pbRender({ adId: adId, pubUrl: pubUrl, clickUrl: clickUrl });
+  })();
+</script>
+</body>
+</html>
