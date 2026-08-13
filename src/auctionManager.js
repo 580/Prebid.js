@@ -139,6 +139,11 @@ export function newAuctionManager() {
     _auctions.clear();
   }
 
+  auctionManager.findBidByTrackingId = function(trackingId) { // YMPB
+    return allBidsReceived()
+      .find(bid => bid.trackingId === trackingId);
+  };
+
   auctionManager.removeBidReceived = function(bid) { // YMPB
     for (const auction of _auctions) {
       auction.removeBidReceived(bid);
