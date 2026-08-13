@@ -259,6 +259,36 @@ export function newBidder(spec) {
         const metrics = useMetrics(bid.metrics);
         metrics.checkpoint('addBidResponse');
         adUnitCodesHandled[adUnitCode] = true;
+
+        // YMPB: add parentBidderCode
+        try {
+          const _adUnitId = bid.adUnitId;
+          const _bidRequest = bidderRequest.bids.find(bid => bid.adUnitId === _adUnitId);
+          bid.alias = _bidRequest.alias;
+          bid.ymAlias = _bidRequest.ymAlias;
+          bid.parentBidderCode = _bidRequest.parentBidderCode;
+
+          if (!bid.width) {
+            bid.width = 1;
+          }
+
+          if (!bid.height) {
+            bid.height = 1;
+          }
+
+          if (bid.mediaType === 'video') {
+            if (!bid.playerWidth) {
+              bid.playerWidth = _bidRequest.mediaTypes.video.w;
+            }
+
+            if (!bid.playerHeight) {
+              bid.playerHeight = _bidRequest.mediaTypes.video.h;
+            }
+          }
+        } catch (error) {
+          //
+        }
+
         if (metrics.measureTime('addBidResponse.validate', () => isValid(adUnitCode, bid))) {
           addBidResponse(adUnitCode, bid);
         } else {
