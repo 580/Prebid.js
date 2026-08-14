@@ -285,7 +285,6 @@ export function newBidder(spec) {
               bid.height = bid.playerHeight;
             }
           }
-
         } catch (error) {
           //
         }
