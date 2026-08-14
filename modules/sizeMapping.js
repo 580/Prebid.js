@@ -199,19 +199,20 @@ export function processAdUnitsForLabels(adUnits, activeLabels) {
         } = resolveStatus(getLabels(bid, activeLabels), adUnit.mediaTypes);
 
         // YMPB: check labelAny
-        if (active && bid.labelAny) {
+        let isLabelActive = active;
+        if (isLabelActive && bid.labelAny) {
           if (bid.labelAny.length > 0) {
             activeLabels.forEach(function(_label) {
               if (bid.labelAny.indexOf(_label) < 0) {
-                active = false;
+                isLabelActive = false;
               }
             });
           } else {
-            active = false;
+            isLabelActive = false;
           }
         }
 
-        if (!active) {
+        if (!isLabelActive) {
           logInfo(`Size mapping deactivated adUnit "${adUnit.code}" bidder "${bid.bidder}"`);
         } else {
           if (filterResults) {

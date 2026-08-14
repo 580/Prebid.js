@@ -573,14 +573,6 @@ export function auctionCallbacks(auctionDone, auctionInstance, { index = auction
         bid.parentBidderCode = bidRequest.parentBidderCode;
       }
 
-      if (!bid.width) {
-        bid.width = 1;
-      }
-
-      if (!bid.height) {
-        bid.height = 1;
-      }
-
       if (bid.mediaType === 'video') {
         if (!bid.playerWidth) {
           bid.playerWidth = bidRequest.mediaTypes.video.w;
@@ -588,6 +580,14 @@ export function auctionCallbacks(auctionDone, auctionInstance, { index = auction
 
         if (!bid.playerHeight) {
           bid.playerHeight = bidRequest.mediaTypes.video.h;
+        }
+
+        if (!bid.width) {
+          bid.width = bid.playerWidth;
+        }
+
+        if (!bid.height) {
+          bid.height = bid.playerHeight;
         }
       }
     }
