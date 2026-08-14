@@ -268,14 +268,6 @@ export function newBidder(spec) {
           bid.ymAlias = _bidRequest.ymAlias;
           bid.parentBidderCode = _bidRequest.parentBidderCode;
 
-          if (!bid.width) {
-            bid.width = 1;
-          }
-
-          if (!bid.height) {
-            bid.height = 1;
-          }
-
           if (bid.mediaType === 'video') {
             if (!bid.playerWidth) {
               bid.playerWidth = _bidRequest.mediaTypes.video.w;
@@ -284,7 +276,16 @@ export function newBidder(spec) {
             if (!bid.playerHeight) {
               bid.playerHeight = _bidRequest.mediaTypes.video.h;
             }
+
+            if (!bid.width) {
+              bid.width = bid.playerWidth;
+            }
+
+            if (!bid.height) {
+              bid.height = bid.playerHeight;
+            }
           }
+
         } catch (error) {
           //
         }
