@@ -516,7 +516,7 @@ export function newTargeting(auctionManager) {
 
         if (hbPb > 0) {
           let hbPbReduce = getYmpbOption('YMPB_PB_REDUCE');
-          hbPb = hbPb > hbPbReduce ? (hbPb * 100 - hbPbReduce * 100) / 100 : 0;
+          hbPb = hbPb > hbPbReduce ? Math.round(hbPb * 100 - hbPbReduce * 100) / 100 : 0;
 
           if (hbPb < getYmpbOption('YMPB_CPM_TARGET_MIN')) {
             targetingSet[adUnitCode] = {}; // NOTES: add the key with empty objce, so it includes all of the adUnitCode availabe from the auction
